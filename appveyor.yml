@@ -21,7 +21,7 @@ environment:
   BIOC_USE_DEVEL: FALSE
 
 build_script:
-  - travis-tool.sh r_binary_install BiocManager
+  - travis-tool.sh r_binary_install BiocManager lifecycle
   - travis-tool.sh install_bioc SingleCellExperiment ComplexHeatmap limma DelayedArray S4Vectors DelayedMatrixStats impute
   - travis-tool.sh install_github VPetukhov/ggrastr
   - travis-tool.sh install_deps
