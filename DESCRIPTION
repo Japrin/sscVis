@@ -1,0 +1,17 @@
+Package: sscVis
+Type: Package
+Title: simpler single cell RNAseq data Visualization
+Version: 0.1.0
+Author: Liangtao Zheng
+Maintainer: Liangtao Zheng <tao2013@gmail.com>
+Description: Visualization of single cell RNAseq data.
+License: GPL-3 + file LICENSE
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.0.0
+Depends: R (>= 3.4), SingleCellExperiment, SummarizedExperiment
+Imports: RColorBrewer, data.table, cowplot, ggplot2, ggrepel, 
+    ggpubr, ComplexHeatmap, circlize, dendextend, moduleColor,reshape2,
+    plyr, gridBase, ks, fields, doParallel, cluster,limma,
+    RhpcBLASctl, DelayedArray, scales,magrittr, S4Vectors, matrixStats,
+    DelayedMatrixStats, Matrix, dynamicTreeCut, ggrastr
