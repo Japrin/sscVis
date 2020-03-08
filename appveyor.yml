@@ -17,15 +17,17 @@ environment:
    USE_RTOOLS: true
   matrix:
    - R_VERSION: stable
+  PKGTYPE: both
 
 build_script:
-#  - travis-tool.sh r_binary_install curl pkgmaker
-#  - Rscript -e 'install.packages("https://cran.r-project.org/src/contrib/Archive/BiocManager/BiocManager_1.30.8.tar.gz")'
-  - travis-tool.sh install_r BiocManager
-  - travis-tool.sh install_bioc SingleCellExperiment ComplexHeatmap
-  - travis-tool.sh install_github VPetukhov/ggrastr
+  - travis-tool.sh r_binary_install BiocManager
   - travis-tool.sh install_deps
   - travis-tool.sh install_bioc_deps
+    #  - travis-tool.sh r_binary_install curl pkgmaker
+#  - Rscript -e 'install.packages("https://cran.r-project.org/src/contrib/Archive/BiocManager/BiocManager_1.30.8.tar.gz")'
+#  - travis-tool.sh install_r BiocManager
+  - travis-tool.sh install_bioc SingleCellExperiment ComplexHeatmap
+  - travis-tool.sh install_github VPetukhov/ggrastr
 
 
 test_script:
