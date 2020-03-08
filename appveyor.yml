@@ -19,11 +19,11 @@ environment:
    - R_VERSION: stable
 
 build_script:
+#  - travis-tool.sh r_binary_install curl pkgmaker
+  - travis-tool.sh install_bioc SingleCellExperiment ComplexHeatmap
+  - travis-tool.sh install_github VPetukhov/ggrastr
   - travis-tool.sh install_deps
   - travis-tool.sh install_bioc_deps
-  - travis-tool.sh r_binary_install curl pkgmaker
-  - travis-tool.sh install_bioc SingleCellExperiment scran BiocGenerics BiocParallel ComplexHeatmap
-  - travis-tool.sh install_github VPetukhov/ggrastr
 
 
 test_script:

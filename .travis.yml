@@ -4,6 +4,7 @@ cache: packages
 bioc_packages:
   - SingleCellExperiment
   - ComplexHeatmap
+r_github_packages: VPetukhov/ggrastr
 
 addons:
   apt:
