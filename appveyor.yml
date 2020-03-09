@@ -22,7 +22,7 @@ environment:
 
 build_script:
   - travis-tool.sh r_binary_install BiocManager lifecycle
-  - Rscript -e 'install.packages("matrixStats",type="source")'
+  - Rscript -e 'install.packages("'"matrixStats"'",type="'"source"'")'
   - travis-tool.sh install_bioc SingleCellExperiment ComplexHeatmap limma DelayedArray S4Vectors DelayedMatrixStats impute
   - travis-tool.sh install_github VPetukhov/ggrastr
   - travis-tool.sh install_deps
