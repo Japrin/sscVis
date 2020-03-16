@@ -725,7 +725,7 @@ ssc.plot.heatmap <- function(obj, assay.name="exprs",out.prefix=NULL,
                                            returnHT=TRUE,
                                            par.legend=list(at = seq(z.lo,z.hi,z.step)),
                                            mytitle=mytitle, top_annotation = ha.col),
-                                      if(packageVersion("ComplexHeatmap") %in% c("1.17.1")) list() else list(column_split=column.split),
+                                      if(as.character(packageVersion("ComplexHeatmap")) %in% c("1.17.1")) list() else list(column_split=column.split),
                                       list(...)))
 
 	if(!is.null(out.prefix)){
