@@ -12,9 +12,15 @@ ssc.plot.violin(
   par.legend = list(),
   group.var = "majorCluster",
   group.in = NULL,
+  splitBy = NULL,
   clamp = c(0, 12),
   adjB = NULL,
   do.scale = F,
+  angle.axis.x = 60,
+  add = NULL,
+  par.boxplot = list(outlier.shape = NA, width = 0.25, alpha = 0.8),
+  par.text = list(vjust = 0),
+  palette.name = "YlOrRd",
   out.prefix = NULL,
   p.ncol = 1,
   base_aspect_ratio = 1.1,
@@ -36,11 +42,23 @@ ssc.plot.violin(
 
 \item{group.in}{character; only thoes groups to be shown. NULL for all groups. (default: NULL)}
 
+\item{splitBy}{character; columns in colData(obj). Split the dataset to mupltiple subset then plot them one by one (default: NULL)}
+
 \item{clamp}{integer vector; expression values will be clamped to the range defined by this parameter. (default: c(0,12))}
 
 \item{adjB}{character; batch column of the colData(obj). (default: NULL)}
 
 \item{do.scale}{logical; whether scale the expression value. (default: FALSE)}
+
+\item{angle.axis.x}{numeric; rotation angle. (default 60)}
+
+\item{add}{character; other plots to add. (default NULL)}
+
+\item{par.boxplot}{list; geom_boxplot parameters. (default: list(outlier.shape = NA,width=0.25,alpha=0.8))}
+
+\item{par.text}{list; geom_text parameters. (default: list(vjust=0))}
+
+\item{palette.name}{character; which palette to use. (default: "YlOrRd")}
 
 \item{out.prefix}{character; output prefix. (default: NULL)}
 

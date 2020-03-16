@@ -17,7 +17,7 @@ ssc.plot.tsne(
   xlim = NULL,
   ylim = NULL,
   size = NULL,
-  brewer.palette = "YlOrRd",
+  palette.name = "YlOrRd",
   adjB = NULL,
   clamp = "none",
   do.scale = FALSE,
@@ -62,7 +62,7 @@ ssc.plot.tsne(
 
 \item{size}{double; points' size. If NULL, infer from number of points (default NULL)}
 
-\item{brewer.palette}{character; which palette to use. (default: "YlOrRd")}
+\item{palette.name}{character; which palette to use. (default: "YlOrRd")}
 
 \item{adjB}{character; batch column of the colData(obj). (default: NULL)}
 

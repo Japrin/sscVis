@@ -378,81 +378,96 @@ ssc.order <- function(obj,columns.order=NULL,gene.desc=NULL)
 #' @importFrom DelayedArray DelayedArray
 #' @importFrom DelayedMatrixStats rowSds
 #' @importFrom data.table dcast setkey
+#' @importFrom S4Vectors DataFrame
 #' @details multiple average methods are implemented
 #' @export
 ssc.average.cell <- function(obj,assay.name="exprs",gene=NULL,column="majorCluster",ncell.downsample=NULL,
                              avg="mean",ret.type="data.melt")
 {
-  if(!column %in% colnames(colData(obj))){
-    warning(sprintf("column not in the obj: %s \n",column))
+  if(!all(column %in% colnames(colData(obj)))){
+    warning(sprintf("some column(s) not in the obj: %s \n",column))
     return(NULL)
   }
   if(!is.null(gene)){
     obj <- obj[gene,]
   }
-
+  
   #### downsample cells
   if(!is.null(ncell.downsample)){
-	clust <- colData(obj)[,column]
-	names(clust) <- colnames(obj)
-	grp.list <- unique(clust)
-	f.cell <- unlist(sapply(grp.list,function(x){
-						 x <- names(clust[clust==x])
-						 sample(x,min(length(x),ncell.downsample)) }))
-	obj <- obj[,f.cell]
+    clust <- colData(obj)[,column]
+    names(clust) <- colnames(obj)
+    grp.list <- unique(clust)
+    f.cell <- unlist(sapply(grp.list,function(x){
+      x <- names(clust[clust==x])
+      sample(x,min(length(x),ncell.downsample)) }))
+    obj <- obj[,f.cell]
   }
-
-  cls <- sort(unique(colData(obj)[,column]))
-  data.melt.df <- as.data.table(ldply(cls,function(x){
-    obj.in <- obj[,colData(obj)[,column]==x]
+  
+  cls <- sort(unique(colData(obj)[,column,drop=F]))
+  data.melt.df <- as.data.table(ldply(seq_len(nrow(cls)),function(i){
+    r.filter <- data.table(as.data.frame(cls[i,,drop=F]))
+    f.in <- colSums(laply(names(r.filter),function(x){ obj[[x]]==r.filter[[x]][1] },.drop = F))==length(r.filter)
+    f.out <- !f.in
+    obj.in <- obj[,f.in]
     avg.in <- NULL
     avg.in <- Matrix::rowMeans(assay(obj.in,assay.name))
     if(avg=="mean"){
-      return(data.frame(geneID=names(avg.in),cls=x,avg=avg.in,
-                        stringsAsFactors = F))
+      dat.ret <- data.table(geneID=names(avg.in))
+      for(x in names(r.filter)){
+        dat.ret[[x]] <- r.filter[[x]][1]
+      }
+      dat.ret[["avg"]] <- avg.in
+      return(dat.ret)
     }else if (avg=="diff"){
-      obj.out <- obj[,colData(obj)[,column]!=x]
+      obj.out <- obj[,f.out]
       avg.out <- Matrix::rowMeans(assay(obj.out,assay.name))
-      return(data.frame(geneID=names(avg.out),cls=x,avg=avg.in-avg.out,
-                        stringsAsFactors = F))
+      dat.ret <- data.table(geneID=names(avg.in))
+      for(x in names(r.filter)){
+        dat.ret[[x]] <- r.filter[[x]][1]
+      }
+      dat.ret[["avg"]] <- avg.in - avg.out
+      return(dat.ret)
     }else if (avg=="zscore"){
-      obj.out <- obj[,colData(obj)[,column]!=x]
+      obj.out <- obj[,f.out]
       avg.out <- Matrix::rowMeans(assay(obj.out,assay.name))
       ##sd.r <- matrixStats::rowSds(assay(obj,assay.name))
       sd.r <- DelayedMatrixStats::rowSds(DelayedArray(assay(obj,assay.name)))
-      dat.ret <- data.frame(geneID=names(avg.out),cls=x,avg=(avg.in-avg.out)/sd.r,
-							stringsAsFactors = F)
-	  dat.ret$avg[is.na(dat.ret$avg)] <- 0
-	  return(dat.ret)
+      dat.ret <- data.table(geneID=names(avg.in))
+      for(x in names(r.filter)){
+        dat.ret[[x]] <- r.filter[[x]][1]
+      }
+      dat.ret[["avg"]] <- (avg.in-avg.out)/sd.r
+      dat.ret$avg[is.na(dat.ret$avg)] <- 0
+      return(dat.ret)
     }
   }))
+  
   if(ret.type=="data.melt"){
     return(data.melt.df)
   }else if(ret.type=="data.dcast"){
-    dat.df <- dcast(data.melt.df,geneID~cls,value.var="avg")
+    dat.df <- dcast(data.melt.df,sprintf("geneID~%s",paste0(column,collapse = "+")),value.var="avg")
     ##rownames(dat.df) <- dat.df[,1]
     setkey(dat.df,"geneID")
     dat.df <- dat.df[rownames(obj),]
     return(dat.df)
   }else if(ret.type=="data.mtx"){
-    dat.df <- dcast(data.melt.df,geneID~cls,value.var="avg")
+    dat.df <- dcast(data.melt.df,sprintf("geneID~%s",paste0(column,collapse = "+")),value.var="avg")
     dat.mtx <- as.matrix(dat.df[,-1])
     rownames(dat.mtx) <- dat.df[[1]]
     dat.mtx <- dat.mtx[rownames(obj),]
     return(dat.mtx)
   }else if(ret.type=="sce"){
-    dat.df <- dcast(data.melt.df,geneID~cls,value.var="avg")
+    dat.df <- dcast(data.melt.df,sprintf("geneID~%s",paste0(column,collapse = "+")),value.var="avg")
     dat.mtx <- as.matrix(dat.df[,-1])
     rownames(dat.mtx) <- dat.df[[1]]
     dat.mtx <- dat.mtx[rownames(obj),]
     obj.ret <- ssc.build(dat.mtx,assay.name=assay.name,display.name=rowData(obj)$display.name)
-    if(is.factor(obj[[column]])){
-        ##alevels <- intersect(levels(obj[[column]]),colnames(obj.ret))
-        alevels <- levels(obj[[column]])
-        colData(obj.ret)[,column] <- factor(colnames(obj.ret),levels=alevels)
-    }else{
-        colData(obj.ret)[,column] <- colnames(obj.ret)
-    }
+    obj.ret.colDat <- unique(data.melt.df[,column,with=F])
+    obj.ret.colDat$cid <- do.call(paste, c(obj.ret.colDat, list(sep = '_')))
+    setkey(obj.ret.colDat,"cid")
+    obj.ret.colDat.df <- as.data.frame(obj.ret.colDat[colnames(obj.ret),])
+    rownames(obj.ret.colDat.df) <- obj.ret.colDat.df$cid
+    colData(obj.ret) <- DataFrame(obj.ret.colDat.df)
     return(obj.ret)
   }
 }

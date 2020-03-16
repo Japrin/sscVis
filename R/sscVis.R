@@ -38,7 +38,7 @@ ssc.plot.silhouette <- function(obj,cluster.label,reducedDim.name="iCor.tsne",do
 #' @param xlim integer or NULL; only draw points lie in the ragne specified by xlim and ylim (default NULL)
 #' @param ylim integer or NULL; only draw points lie in the ragne specified by xlim and ylim (default NULL)
 #' @param size double; points' size. If NULL, infer from number of points (default NULL)
-#' @param brewer.palette character; which palette to use. (default: "YlOrRd")
+#' @param palette.name character; which palette to use. (default: "YlOrRd")
 #' @param adjB character; batch column of the colData(obj). (default: NULL)
 #' @param clamp integer vector; expression values will be clamped to the range defined by this parameter, such as c(0,15). (default: "none" )
 #' @param do.scale logical; whether scale the expression value. (default: FALSE)
@@ -71,9 +71,9 @@ ssc.plot.silhouette <- function(obj,cluster.label,reducedDim.name="iCor.tsne",do
 ssc.plot.tsne <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,splitBy=NULL,
                              plotDensity=F, colSet=list(),
                              reduced.name="iCor.tsne",reduced.dim=c(1,2),xlim=NULL,ylim=NULL,size=NULL,
-                             brewer.palette="YlOrRd",adjB=NULL,clamp="none",do.scale=FALSE,
+                             palette.name="YlOrRd",adjB=NULL,clamp="none",do.scale=FALSE,
                              label=NULL,par.repel=list(force=1),vector.friendly=F,par.legend=list(),
-							 theme.use=theme_bw,legend.w=1,verbose=F,
+                             theme.use=theme_bw,legend.w=1,verbose=F,
                              par.geneOnTSNE=list(scales="free",pt.order="value",pt.alpha=0.1),
                              out.prefix=NULL,p.ncol=3,width=NA,height=NA,base_aspect_ratio=1.1,peaks=NULL)
 {
@@ -131,7 +131,8 @@ ssc.plot.tsne <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,split
           p <- ggplot2::ggplot(dat.plot,aes(Dim1,Dim2)) +
             my.ggPoint(aes_string(colour=cc),
                        show.legend=if(!is.numeric(dat.plot[,cc]) && nvalues>40) F else NA,
-                       size=if(is.null(size)) auto.point.size(npts)*1.1 else size)
+                       size=if(is.null(size)) auto.point.size(npts)*1.1 else size) +
+            labs(x=sprintf("Dim%d",reduced.dim[1]),y=sprintf("Dim%d",reduced.dim[2]))
           if(!is.null(label)){
               dat.plot.label <- as.data.table(dat.plot)[,.(Dim1=median(.SD$Dim1),
                                                            Dim2=median(.SD$Dim2)),
@@ -141,10 +142,11 @@ ssc.plot.tsne <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,split
                                                           par.repel))
           }
           if(!is.null(splitBy)){
-            p <- p + ggplot2::facet_wrap(~splitBy)
+            p <- p + ggplot2::facet_wrap(~splitBy,ncol = if(length(p.ncol)>1) p.ncol[2] else NULL)
           }
           if(is.numeric(dat.plot[,cc])){
-            p <- p + do.call(scale_colour_gradientn,c(list(colours = RColorBrewer::brewer.pal(9, brewer.palette)),
+            p <- p + do.call(scale_colour_gradientn,
+                             c(list(colours = getColorPaletteFromNameContinuous(palette.name)),
 													  par.legend))
           }else{
             p <- p + do.call(scale_colour_manual,c(list(values = colSet[[cc]]),par.legend))
@@ -194,10 +196,11 @@ ssc.plot.tsne <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,split
 
           return(p)
         })
-        pp <- cowplot::plot_grid(plotlist=multi.p,ncol = if(length(columns)>1) 2 else 1,align = "hv")
+        pp <- cowplot::plot_grid(plotlist=multi.p,
+                                 ncol = if(length(columns)>1) p.ncol[1] else 1,align = "hv")
         if(!is.null(out.prefix)){
           cowplot::save_plot(sprintf("%s.columnsOntSNE.pdf",out.prefix),pp,
-                             ncol = if(length(columns)>1) 2 else 1,
+                             ncol = if(length(columns)>1) p.ncol[1] else 1,
                              base_aspect_ratio=base_aspect_ratio,
 							 base_height=if(!is.na(height)) height else 3.71)
         }else{
@@ -233,9 +236,10 @@ ssc.plot.tsne <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,split
     }
     p <- do.call(ggGeneOnTSNE,c(list(Y=dat.onTSNE, dat.map=dat.map, gene.to.show=gene,
                                      p.ncol=p.ncol,xlim=xlim,ylim=ylim,
-                                     size=size,width=width,height=height,
+                                     size=size,width=width,height=height,palette.name=palette.name,
                                      clamp=clamp,vector.friendly=vector.friendly,theme.use=theme.use,
-									 par.legend=par.legend,
+                                     par.legend=par.legend,
+                                     splitBy=if(is.null(splitBy)) NULL else obj[[splitBy]],
                                      out.prefix=out.prefix),
                                 par.geneOnTSNE))
     if(is.null(out.prefix)){
@@ -262,6 +266,7 @@ ssc.plot.tsne <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,split
 #' @param columns character; columns in colData(obj) to be showd. (default: NULL)
 #' @param group.var character; column in the colData(obj) used for grouping. (default: "majorCluster")
 #' @param group.in character; only thoes groups to be shown. NULL for all groups. (default: NULL)
+#' @param splitBy character; columns in colData(obj). Split the dataset to mupltiple subset then plot them one by one (default: NULL)
 #' @param clamp integer vector; expression values will be clamped to the range defined by this parameter. (default: c(0,12))
 #' @param out.prefix character; output prefix. (default: NULL)
 #' @param p.ncol integer; number of columns in the figure layout. (default: 3)
@@ -269,21 +274,31 @@ ssc.plot.tsne <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,split
 #' @param adjB character; batch column of the colData(obj). (default: NULL)
 #' @param do.scale logical; whether scale the expression value. (default: FALSE)
 #' @param par.legend list; lengend parameters, used to overwrite the default setting; (default: list())
+#' @param par.boxplot list; geom_boxplot parameters. (default: list(outlier.shape = NA,width=0.25,alpha=0.8))
+#' @param par.text list; geom_text parameters. (default: list(vjust=0))
+#' @param palette.name character; which palette to use. (default: "YlOrRd")
+#' @param angle.axis.x numeric; rotation angle. (default 60)
+#' @param add character; other plots to add. (default NULL)
 #' @param ... parameter passed to cowplot::save_plot
 #' @importFrom SingleCellExperiment colData reducedDim
-#' @importFrom ggplot2 ggplot aes geom_violin scale_fill_gradient2 theme_bw theme aes_string facet_grid element_text geom_boxplot scale_colour_brewer
-#' @importFrom S4Vectors `metadata<-` metadata
+#' @importFrom ggplot2 ggplot aes geom_violin scale_fill_gradientn theme_bw theme aes_string facet_grid element_text geom_boxplot scale_colour_brewer
 #' @importFrom cowplot save_plot plot_grid
 #' @importFrom data.table melt data.table
 #' @importFrom SummarizedExperiment assay
 #' @importFrom grDevices pdf png dev.off
 #' @importFrom graphics par plot.new title
+#' @importFrom S4Vectors `metadata<-` metadata
 #' @importFrom stats quantile
 #' @details If `gene` is not NULL, violin of the genes' expression will be plot; if columns in not
 #' NULL, colData of obj with names in `columns` will be plot in violin.
 #' @export
 ssc.plot.violin <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,par.legend=list(),
-                            group.var="majorCluster",group.in=NULL,clamp=c(0,12),adjB=NULL,do.scale=F,
+                            group.var="majorCluster",group.in=NULL,splitBy=NULL,
+                            clamp=c(0,12),adjB=NULL,do.scale=F,
+                            angle.axis.x=60,add=NULL,
+                            par.boxplot=list(outlier.shape = NA,width=0.25,alpha=0.8),
+                            par.text=list(vjust = 0),
+                            palette.name="YlOrRd",
                             out.prefix=NULL,p.ncol=1,base_aspect_ratio=1.1,...)
 {
   #requireNamespace("ggplot2")
@@ -305,11 +320,21 @@ ssc.plot.violin <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,par
 	  dat.plot.df <- data.table::data.table(sample=rownames(dat.plot),stringsAsFactors = F)
 	  dat.plot.df <- cbind(dat.plot.df,as.data.frame(colData(obj)[,group.var,drop=F]))
 	  dat.plot.df <- cbind(dat.plot.df,dat.plot)
-	  dat.plot.df <- data.table::melt(dat.plot.df,id.vars=c("sample",group.var),
-									  variable.name="gene",value.name=assay.name)
-	  dat.plot.df.grpMean <- dat.plot.df[,lapply(.SD,mean,na.rm=T),by=c("gene",group.var),.SDcols=assay.name]
-	  colnames(dat.plot.df.grpMean) <- c("gene",group.var,"meanExp")
-	  dat.plot.df <- dat.plot.df.grpMean[dat.plot.df,,on=c("gene",group.var)]
+	  if(!is.null(splitBy)){
+	    dat.plot.df <- cbind(dat.plot.df,data.table(splitBy=obj[[splitBy]]))
+	    dat.plot.df <- data.table::melt(dat.plot.df,id.vars=c("sample",group.var,"splitBy"),
+	                                    variable.name="gene",value.name=assay.name)
+	    dat.plot.df.grpMean <- dat.plot.df[,lapply(.SD,mean,na.rm=T),by=c("gene",group.var,"splitBy"),.SDcols=assay.name]
+	    colnames(dat.plot.df.grpMean) <- c("gene",group.var,"splitBy","meanExp")
+	    dat.plot.df <- dat.plot.df.grpMean[dat.plot.df,,on=c("gene",group.var,"splitBy")]
+	  }else{
+	    dat.plot.df <- data.table::melt(dat.plot.df,id.vars=c("sample",group.var),
+	                                    variable.name="gene",value.name=assay.name)  
+	    dat.plot.df.grpMean <- dat.plot.df[,lapply(.SD,mean,na.rm=T),by=c("gene",group.var),.SDcols=assay.name]
+	    colnames(dat.plot.df.grpMean) <- c("gene",group.var,"meanExp")
+	    dat.plot.df <- dat.plot.df.grpMean[dat.plot.df,,on=c("gene",group.var)]
+	  }
+	  dat.plot.df.grpMean$meanExp.label <- sprintf("%0.2f",dat.plot.df.grpMean$meanExp)
       dat.plot.df[,gene:=factor(gene,levels=colnames(dat.plot),ordered=T)]
 
       if(is.null(clamp)){
@@ -325,25 +350,44 @@ ssc.plot.violin <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,par
 	  }
 	  p <- ggplot(dat.plot.df, aes_string(group.var[1], assay.name))
 	  if(length(group.var)==1){
-		p <- p +
-		  geom_violin(scale = "width",aes(fill=meanExp),color=NA,show.legend = T) +
-		  do.call(scale_fill_gradient2,c(list(low = "yellow",mid = "red",high = "black",midpoint = mean(clamp), limits=clamp),
-										 par.legend))
+  		p <- p +
+  		  geom_violin(scale = "width",aes(fill=meanExp),color=NA,show.legend = T) +
+  		  do.call(scale_fill_gradientn,
+  		                 c(list(colours = getColorPaletteFromNameContinuous(palette.name),
+  		                        limits=clamp),
+  		                   par.legend))
+  		#   do.call(scale_fill_gradient2,
+  		#           c(list(low = "yellow",mid = "red",high = "black",midpoint = mean(clamp), limits=clamp),
+  		# 								 par.legend))
 	  }else if(length(group.var)==2)
 	  {
-		p <- p +
-			geom_boxplot(aes_string(colour = group.var[2])) +
-			scale_colour_brewer(palette = "Set1")
-			#geom_violin(scale = "width",aes_string(fill="meanExp",linetype=group.var[2],color=group.var[2]),
-			#            show.legend = T) +
-			#scale_fill_gradient2(low = "yellow",mid = "red",high = "black",midpoint = mean(clamp),limits=clamp)
+  		p <- p +
+  			geom_boxplot(aes_string(colour = group.var[2])) +
+  			scale_colour_brewer(palette = "Set1")
+  			#geom_violin(scale = "width",aes_string(fill="meanExp",linetype=group.var[2],color=group.var[2]),
+  			#            show.legend = T) +
+  			#scale_fill_gradient2(low = "yellow",mid = "red",high = "black",midpoint = mean(clamp),limits=clamp)
 	  }
-	  p <- p +
-		theme_bw(base_size = 12) +
-#		facet_grid(gene ~ .,switch = "y",scales = "free_y") +
-        facet_wrap(gene~.,strip.position = "left",scales="free_y",dir="v",ncol=p.ncol) +
-		theme(axis.text.x = element_text(angle = 60, hjust = 1),
-              strip.placement = "inside")
+	  if(!is.null(add)){
+	    if("boxplot" %in% add){
+	      p <- p + do.call(geom_boxplot,par.boxplot)
+	    }
+	    if("text" %in% add){
+	      p <- p + do.call(geom_text,c(list(data=dat.plot.df.grpMean,
+	                                        mapping=aes_string(y="meanExp",label="meanExp.label")),
+	                                   par.text))
+	    }
+	  }
+	  if(!is.null(splitBy)){
+	    p <- p + facet_grid(splitBy~gene,scales="free_y")
+	  }else{
+	    p <- p + facet_wrap(gene~.,strip.position = "left",scales="free_y",dir="v",ncol=p.ncol)
+	      #		facet_grid(gene ~ .,switch = "y",scales = "free_y")
+	  }
+	  p <- p + theme_bw(base_size = 12) + 
+	    theme(axis.text.x = element_text(angle = angle.axis.x, hjust = 1),
+	          #strip.background = element_blank(),
+	          strip.placement = "inside")
   } else if(!is.null(columns)){
 	  dat.plot.df <- as.data.table(cbind(data.frame(cellID=colnames(obj),stringsAsFactors=F),
 						  as.data.frame(colData(obj)[,c(group.var,columns),drop=F])))
@@ -532,8 +576,8 @@ ssc.plot.heatmap <- function(obj, assay.name="exprs",out.prefix=NULL,
                              do.clustering.row=T,do.clustering.col=T,
                              dend.col=FALSE,dend.row=FALSE,
                              clustering.distance="spearman",clustering.method="complete",
-							 k.row=1,k.col=1,
-							 returnHT=FALSE,
+							               k.row=1,k.col=1,
+							               returnHT=FALSE,
                              palette.name=NULL,row.split=NULL,column.split=NULL,
                              annotation_legend_param=list(),ann.bar.height=1.5, mytitle="",...)
 {
@@ -552,8 +596,8 @@ ssc.plot.heatmap <- function(obj, assay.name="exprs",out.prefix=NULL,
 
     n <- nrow(obj)
     m <- ncol(obj)
-    if(n<3) { loginfo(sprintf("Too few genes: n=%s",n)); return(NULL) }
-    if(m<3) { loginfo(sprintf("Too few samples: m=%s",m)); return(NULL) }
+    if(n<2) { loginfo(sprintf("Too few genes: n=%s",n)); return(NULL) }
+    if(m<2) { loginfo(sprintf("Too few samples: m=%s",m)); return(NULL) }
 
     if (!is.null(row.split) && is.null(names(row.split))) {
         names(row.split) <- unname(rowData(obj)$display.name)
@@ -565,20 +609,23 @@ ssc.plot.heatmap <- function(obj, assay.name="exprs",out.prefix=NULL,
     #### sort
     if(is.null(ave.by)){
         obj <- ssc.assay.hclust(obj,assay.name=assay.name,
-                                order.col=if(is.logical(dend.col) && FALSE==dend.col) do.clustering.col else FALSE,
-                                order.row=if(is.logical(dend.row) && FALSE==dend.row) do.clustering.row else FALSE,
-                                clustering.distance="spearman",clustering.method="complete",
+                                # order.col=if(is.logical(dend.col) && FALSE==dend.col) do.clustering.col else FALSE,
+                                # order.row=if(is.logical(dend.row) && FALSE==dend.row) do.clustering.row else FALSE,
+                                order.col = do.clustering.col,
+                                order.row = do.clustering.row,
+                                clustering.distance="spearman",clustering.method=clustering.method,
                                 k.row=1,k.col=1)
     }else{
         avg.colDat <- unique((colData(obj)[,unique(c(ave.by,columns,columns.order)),drop=F]))
         obj <- ssc.average.cell(obj,assay.name=assay.name,column=ave.by,ret.type="sce")
-        #columns <- intersect(ave.by,columns)
-        #columns.order <- intersect(ave.by,columns.order)
-        if(nrow(avg.colDat)==ncol(obj) && all(avg.colDat[[ave.by]] %in% colnames(obj)) ){
-            rownames(avg.colDat) <- avg.colDat[[ave.by]]
-            colData(obj) <- avg.colDat[colnames(obj),,drop=F]
-        }
-        obj <- ssc.assay.hclust(obj,assay.name,order.col=do.clustering.col,order.row=do.clustering.row)
+        ####columns <- intersect(ave.by,columns)
+        ####columns.order <- intersect(ave.by,columns.order)
+        # if(nrow(avg.colDat)==ncol(obj) && all(avg.colDat[[ave.by]] %in% colnames(obj)) ){
+        #     rownames(avg.colDat) <- avg.colDat[[ave.by]]
+        #     colData(obj) <- avg.colDat[colnames(obj),,drop=F]
+        # }
+        obj <- ssc.assay.hclust(obj,assay.name,order.col=do.clustering.col,order.row=do.clustering.row,
+                                clustering.distance="spearman",clustering.method=clustering.method)
     }
 
     #### visualization of annotation on top of heatmap
@@ -618,7 +665,7 @@ ssc.plot.heatmap <- function(obj, assay.name="exprs",out.prefix=NULL,
         g.show.legend <- T
         ha.col <- ComplexHeatmap::HeatmapAnnotation(df = annDF, col = colSet,
                                     show_legend = g.show.legend,
-									simple_anno_size = unit(ann.bar.height, "cm"),
+									                  simple_anno_size = unit(ann.bar.height, "cm"),
                                     annotation_legend_param = annotation_legend_param)
         ###top_annotation_height <- unit(ann.bar.height * ncol(annDF), "cm")
     }
@@ -661,7 +708,8 @@ ssc.plot.heatmap <- function(obj, assay.name="exprs",out.prefix=NULL,
     if(is.null(palette.name)){
         exp.palette <- rev(brewer.pal(n = 7, name = ifelse(do.scale,"RdBu","RdYlBu")))
     }else{
-        exp.palette <- rev(brewer.pal(n = 7, name = palette.name))
+        ###exp.palette <- rev(brewer.pal(n = 7, name = palette.name))
+        exp.palette <- getColorPaletteFromNameContinuous(palette.name)
     }
 
     if(!is.null(row.split)){
@@ -672,10 +720,10 @@ ssc.plot.heatmap <- function(obj, assay.name="exprs",out.prefix=NULL,
     }
     ht <- plotMatrix.simple(dat.plot,out.prefix=NULL,exp.name=exp.title,show.number=F,
                                do.clust=NULL,z.lo=z.lo,z.hi=z.hi,palatte=exp.palette,
-                               clust.row=FALSE,clust.column=FALSE,show.dendrogram=FALSE,
+                               clust.row=FALSE,clust.column=FALSE,
                                returnHT=TRUE,column_split=column.split,
                                par.legend=list(at = seq(z.lo,z.hi,z.step)),
-							   mytitle=mytitle,
+                               mytitle=mytitle,
                                top_annotation = ha.col,...)
 
 	if(!is.null(out.prefix)){

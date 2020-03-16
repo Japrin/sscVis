@@ -17,11 +17,13 @@ ggGeneOnTSNE(
   pt.alpha = 0.5,
   pt.order = "value",
   clamp = NULL,
+  palette.name = "YlOrRd",
   width = 9,
   height = 8,
   scales = "fixed",
   vector.friendly = F,
-  par.legend = list()
+  par.legend = list(),
+  splitBy = NULL
 )
 }
 \arguments{
@@ -50,6 +52,8 @@ should be sample id}
 
 \item{clamp}{integer vector; expression values will be clamped to the range defined by this parameter, such as c(0,15). (default: NULL )}
 
+\item{palette.name}{character; which palette to use, such as "RdBu","RdYlBu" (default: NULL)}
+
 \item{width}{numeric; width of the plot (default: 9)}
 
 \item{height}{numeric; height of the plot (default: 8)}
@@ -59,6 +63,8 @@ should be sample id}
 \item{vector.friendly}{logical; output vector friendly figure (default: FALSE)}
 
 \item{par.legend}{list; lengend parameters, used to overwrite the default setting; (default: list())}
+
+\item{splitBy}{character; split by (default: NULL)}
 }
 \value{
 a ggplot object

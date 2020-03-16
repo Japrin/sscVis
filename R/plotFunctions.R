@@ -28,6 +28,27 @@ auto.point.size <- function(n){
   }
 }
 
+#' Determine point size automatically
+#' @param palette.name name of palette often used, such as "YlOrRd". (default: "YlOrRd)
+#' @importFrom RColorBrewer brewer.pal brewer.pal.info
+#' @importFrom scales viridis_pal
+#' @return character vector contain the colors
+getColorPaletteFromNameContinuous <- function(palette.name="YlOrRd"){
+  p.info.RColorBrewer <- RColorBrewer::brewer.pal.info
+  p.info.RColorBrewer$pname <- rownames(p.info.RColorBrewer)
+  p.RColorBrewer.seq <- p.info.RColorBrewer[p.info.RColorBrewer$category=="seq",][["pname"]]
+  p.RColorBrewer.div <- p.info.RColorBrewer[p.info.RColorBrewer$category=="div",][["pname"]]
+  ret.col <- c()
+  if(palette.name %in% p.RColorBrewer.seq){
+    ret.col <- RColorBrewer::brewer.pal(p.info.RColorBrewer[palette.name,"maxcolors"],palette.name)
+  }else if(palette.name %in% p.RColorBrewer.div){
+    ret.col <- rev(RColorBrewer::brewer.pal(p.info.RColorBrewer[palette.name,"maxcolors"],palette.name))
+  }else if(palette.name %in% c("magma","inferno","plasma","viridis","cividis")){
+    ret.col <- (scales::viridis_pal(option = palette.name)(9))
+  }
+  return(ret.col)
+}
+
 #' Plot gene expression on tSNE map
 #'
 #' @importFrom RColorBrewer brewer.pal
@@ -45,6 +66,7 @@ auto.point.size <- function(n){
 #' @param xlim integer or NULL; only draw points lie in the ragne specified by xlim and ylim (default NULL)
 #' @param ylim integer or NULL; only draw points lie in the ragne specified by xlim and ylim (default NULL)
 #' @param size double; points' size. If NULL, infer from number of points (default NULL)
+#' @param palette.name character; which palette to use, such as "RdBu","RdYlBu" (default: NULL)
 #' @param width numeric; width of the plot (default: 9)
 #' @param height numeric; height of the plot (default: 8)
 #' @param pt.alpha numeric; alpha of the points (default: 0.5)
@@ -53,13 +75,16 @@ auto.point.size <- function(n){
 #' @param scales character; whether use the same scale across genes. one of "fixed" or "free" (default: "fixed")
 #' @param vector.friendly logical; output vector friendly figure (default: FALSE)
 #' @param par.legend list; lengend parameters, used to overwrite the default setting; (default: list())
+#' @param splitBy character; split by (default: NULL)
 #' @details For genes contained in both `Y` and `gene.to.show`, show their expression on the tSNE
 #' map provided as `dat.map`. One point in the map represent a cell; cells with higher expression
 #' also have darker color.
 #' @return a ggplot object
 ggGeneOnTSNE <- function(Y,dat.map,gene.to.show,out.prefix=NULL,p.ncol=3,theme.use=theme_bw,
                          xlim=NULL,ylim=NULL,size=NULL,pt.alpha=0.5,pt.order="value",clamp=NULL,
-                         width=9,height=8,scales="fixed",vector.friendly=F,par.legend=list()){
+                         palette.name="YlOrRd",
+                         width=9,height=8,scales="fixed",vector.friendly=F,
+                         par.legend=list(),splitBy=NULL){
   #suppressPackageStartupMessages(require("data.table"))
   #requireNamespace("ggplot2",quietly = T)
   #requireNamespace("RColorBrewer",quietly = T)
@@ -76,7 +101,12 @@ ggGeneOnTSNE <- function(Y,dat.map,gene.to.show,out.prefix=NULL,p.ncol=3,theme.u
   dat.plot <- data.table::data.table(sample=rownames(dat.map),stringsAsFactors = F)
   dat.plot <- cbind(dat.plot,dat.map,t(as.matrix(Y[gene.to.show,dat.plot$sample,drop=F])))
   colnames(dat.plot) <- c("sample","Dim1","Dim2",names(gene.to.show))
-  dat.plot.melt <- data.table::melt(dat.plot,id.vars = c("sample","Dim1","Dim2"))
+  if(!is.null(splitBy)){ 
+    dat.plot$splitBy=splitBy
+    dat.plot.melt <- data.table::melt(dat.plot,id.vars = c("sample","Dim1","Dim2","splitBy"))
+  }else{
+    dat.plot.melt <- data.table::melt(dat.plot,id.vars = c("sample","Dim1","Dim2"))
+  }
   dat.plot.melt <- dat.plot.melt[!is.na(value),]
   if(pt.order=="value"){
 	  dat.plot.melt <- dat.plot.melt[order(dat.plot.melt$value,decreasing = F),]
@@ -86,7 +116,9 @@ ggGeneOnTSNE <- function(Y,dat.map,gene.to.show,out.prefix=NULL,p.ncol=3,theme.u
   npts <- nrow(dat.plot)
   dat.plot.melt[,variable:=factor(variable,levels=names(gene.to.show),ordered=T)]
   
-  make.plot <- function(gene.to.show,dat.plot.melt,show.legend=T,clamp="none",value.range=NULL,size=NULL,vector.friendly=F,out.prefix=NULL)
+  make.plot <- function(gene.to.show,dat.plot.melt,show.legend=T,clamp="none",
+                        value.range=NULL,size=NULL,vector.friendly=F,
+                        out.prefix=NULL)
   {
 	  lapply(names(gene.to.show),function(x){
 						.dd <- dat.plot.melt[variable==x,]
@@ -111,10 +143,13 @@ ggGeneOnTSNE <- function(Y,dat.map,gene.to.show,out.prefix=NULL,p.ncol=3,theme.u
 									   size=if(is.null(size)) auto.point.size(npts)*1.1 else size,
 									   alpha=pt.alpha,stroke=0,shape=16) +
 							labs(title=x, x ="", y = "")
-						p <- p + do.call(scale_colour_gradientn,c(list(colours=RColorBrewer::brewer.pal(9,"YlOrRd"),
-																	 limits=c(value.range[1],
-																			  value.range[length(value.range)])),
-																  par.legend))
+						if(!is.null(splitBy)){
+						  p <- p + ggplot2::facet_wrap(~splitBy,ncol = if(length(p.ncol)>1) p.ncol[2] else NULL)
+						}
+						p <- p + do.call(scale_colour_gradientn,
+						                 c(list(colours=getColorPaletteFromNameContinuous(palette.name),
+																	 limits=c(value.range[1],value.range[length(value.range)])),
+																	 par.legend))
 						p <- p + theme.use()
 					    p <- p + theme(plot.title = element_text(hjust = 0.5))+
 							coord_cartesian(xlim = xlim, ylim = ylim, expand = TRUE)
@@ -177,11 +212,11 @@ ggGeneOnTSNE <- function(Y,dat.map,gene.to.show,out.prefix=NULL,p.ncol=3,theme.u
       multi.p <- make.plot(gene.to.show,dat.plot.melt,show.legend=F,clamp="none",value.range=value.range,size=size,vector.friendly=vector.friendly,out.prefix=out.prefix)
 	  legend.p <- multi.p[[1]][["legend"]]
 	  ####+ theme(legend.box.margin = margin(0, 0, 0, 12)))
-      p <- cowplot::plot_grid(plotlist=llply(multi.p,function(x){ x[["plot"]] }),ncol = p.ncol,align = "hv")
-	  p <- cowplot::plot_grid(p, legend.p, rel_widths = c(3, .4))
+      p <- cowplot::plot_grid(plotlist=llply(multi.p,function(x){ x[["plot"]] }),ncol = p.ncol[1],align = "hv")
+	  p <- cowplot::plot_grid(p, legend.p, rel_widths = c(p.ncol, 0.4))
   }else{
       multi.p <- make.plot(gene.to.show,dat.plot.melt,show.legend=T,clamp=clamp,value.range=NULL,size=size,vector.friendly=vector.friendly,out.prefix=out.prefix)
-      p <- cowplot::plot_grid(plotlist=llply(multi.p,function(x){ x[["plot"]] }),ncol = p.ncol,align = "hv")
+      p <- cowplot::plot_grid(plotlist=llply(multi.p,function(x){ x[["plot"]] }),ncol = p.ncol[1],align = "hv")
   }
   if(!is.null(out.prefix)){
     ggplot2::ggsave(sprintf("%s.geneOntSNE.pdf",out.prefix),plot=p,width = width,height = height)
@@ -268,7 +303,7 @@ plotMatrix.simple <- function(dat,out.prefix=NULL,mytitle="Heatmap",show.number=
                                waterfall.row=FALSE,waterfall.column=FALSE,
                                row.ann.dat=NULL,row.split=NULL,returnHT=FALSE,
                                par.legend=list(),par.heatmap=list(),col.ht=NULL,
-							   par.warterfall=list(score.alpha=1.5,do.norm=T),
+							                 par.warterfall=list(score.alpha=1.5,do.norm=T),
                                pdf.width=8,pdf.height=8,fig.type="pdf",exp.name="Count",...)
 {
     #requireNamespace("gplots")
@@ -541,7 +576,9 @@ plotDistFromCellInfoTable <- function(obj,out.prefix,plot.type="barplot",
                                         by=c("cmp.var","group.var")]
         dat.plot[,NOther:=NTotal-N]
         
-        p <- ggbarplot(dat.plot,x="group.var",y="freq",fill="cmp.var",color=NA,
+        p <- ggbarplot(dat.plot,x="group.var",y="freq",
+                       fill="cmp.var",
+                       color=NA,
                        position=bar.position,...)
 
         if(test.method!=""){
