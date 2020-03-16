@@ -403,7 +403,7 @@ ssc.average.cell <- function(obj,assay.name="exprs",gene=NULL,column="majorClust
     obj <- obj[,f.cell]
   }
   
-  cls <- sort(unique(colData(obj)[,column,drop=F]))
+  cls <- unique(colData(obj)[,column,drop=F])
   data.melt.df <- as.data.table(ldply(seq_len(nrow(cls)),function(i){
     r.filter <- data.table(as.data.frame(cls[i,,drop=F]))
     f.in <- colSums(laply(names(r.filter),function(x){ obj[[x]]==r.filter[[x]][1] },.drop = F))==length(r.filter)

@@ -665,7 +665,8 @@ ssc.plot.heatmap <- function(obj, assay.name="exprs",out.prefix=NULL,
         g.show.legend <- T
         ha.col <- ComplexHeatmap::HeatmapAnnotation(df = annDF, col = colSet,
                                     show_legend = g.show.legend,
-									                  simple_anno_size = unit(ann.bar.height, "cm"),
+									                  #simple_anno_size = unit(ann.bar.height, "cm"),
+									                  annotation_height = unit(rep(ann.bar.height,ncol(annDF)), "cm"),
                                     annotation_legend_param = annotation_legend_param)
         ###top_annotation_height <- unit(ann.bar.height * ncol(annDF), "cm")
     }
@@ -725,6 +726,16 @@ ssc.plot.heatmap <- function(obj, assay.name="exprs",out.prefix=NULL,
                                par.legend=list(at = seq(z.lo,z.hi,z.step)),
                                mytitle=mytitle,
                                top_annotation = ha.col,...)
+    
+    
+    ht <- do.call(plotMatrix.simple,c(list(dat=dat.plot,out.prefix=NULL,exp.name=exp.title,show.number=F,
+                                           do.clust=NULL,z.lo=z.lo,z.hi=z.hi,palatte=exp.palette,
+                                           clust.row=FALSE,clust.column=FALSE,
+                                           returnHT=TRUE,
+                                           par.legend=list(at = seq(z.lo,z.hi,z.step)),
+                                           mytitle=mytitle, top_annotation = ha.col),
+                                      if(packageVersion("ComplexHeatmap") %in% c("1.17.1")) list() else list(column_split=column.split),
+                                      list(...)))
 
 	if(!is.null(out.prefix)){
 		ComplexHeatmap::draw(ht, newpage= FALSE,merge_legends = TRUE,split=row.split)
