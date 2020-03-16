@@ -719,15 +719,6 @@ ssc.plot.heatmap <- function(obj, assay.name="exprs",out.prefix=NULL,
     if(!is.null(column.split)){
         column.split <- column.split[colnames(dat.plot)]
     }
-    ht <- plotMatrix.simple(dat.plot,out.prefix=NULL,exp.name=exp.title,show.number=F,
-                               do.clust=NULL,z.lo=z.lo,z.hi=z.hi,palatte=exp.palette,
-                               clust.row=FALSE,clust.column=FALSE,
-                               returnHT=TRUE,column_split=column.split,
-                               par.legend=list(at = seq(z.lo,z.hi,z.step)),
-                               mytitle=mytitle,
-                               top_annotation = ha.col,...)
-    
-    
     ht <- do.call(plotMatrix.simple,c(list(dat=dat.plot,out.prefix=NULL,exp.name=exp.title,show.number=F,
                                            do.clust=NULL,z.lo=z.lo,z.hi=z.hi,palatte=exp.palette,
                                            clust.row=FALSE,clust.column=FALSE,
