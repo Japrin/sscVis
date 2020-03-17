@@ -410,7 +410,7 @@ ssc.average.cell <- function(obj,assay.name="exprs",gene=NULL,column="majorClust
     f.out <- !f.in
     obj.in <- obj[,f.in]
     avg.in <- NULL
-    avg.in <- Matrix::rowMeans(assay(obj.in,assay.name))
+    avg.in <- Matrix::rowMeans(assay(obj.in,assay.name),na.rm = T)
     if(avg=="mean"){
       dat.ret <- data.table(geneID=names(avg.in))
       for(x in names(r.filter)){
@@ -420,7 +420,7 @@ ssc.average.cell <- function(obj,assay.name="exprs",gene=NULL,column="majorClust
       return(dat.ret)
     }else if (avg=="diff"){
       obj.out <- obj[,f.out]
-      avg.out <- Matrix::rowMeans(assay(obj.out,assay.name))
+      avg.out <- Matrix::rowMeans(assay(obj.out,assay.name),na.rm = T)
       dat.ret <- data.table(geneID=names(avg.in))
       for(x in names(r.filter)){
         dat.ret[[x]] <- r.filter[[x]][1]
@@ -429,9 +429,9 @@ ssc.average.cell <- function(obj,assay.name="exprs",gene=NULL,column="majorClust
       return(dat.ret)
     }else if (avg=="zscore"){
       obj.out <- obj[,f.out]
-      avg.out <- Matrix::rowMeans(assay(obj.out,assay.name))
+      avg.out <- Matrix::rowMeans(assay(obj.out,assay.name),na.rm = T)
       ##sd.r <- matrixStats::rowSds(assay(obj,assay.name))
-      sd.r <- DelayedMatrixStats::rowSds(DelayedArray(assay(obj,assay.name)))
+      sd.r <- DelayedMatrixStats::rowSds(DelayedArray(assay(obj,assay.name)),na.rm = T)
       dat.ret <- data.table(geneID=names(avg.in))
       for(x in names(r.filter)){
         dat.ret[[x]] <- r.filter[[x]][1]
