@@ -495,7 +495,7 @@ ssc.average.gene <- function(obj,assay.name="exprs",gene=NULL,ncell.downsample=N
     gene <- llply(gene,function(x){ match(x,rowData(obj)$display.name)  })
   }
   if(avg=="mean"){
-    mean.mtx <- laply(gene,function(x){ colMeans(assay(obj,assay.name)[x,,drop=F]) },.drop = F)
+    mean.mtx <- laply(gene,function(x){ colMeans(assay(obj,assay.name)[x,,drop=F],na.rm = T) },.drop = F)
     rownames(mean.mtx) <- names(gene)
     obj.mean <- ssc.build(mean.mtx)
     colData(obj.mean) <- colData(obj)
