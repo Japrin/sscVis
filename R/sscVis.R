@@ -566,6 +566,7 @@ ssc.plot.cor <- function(obj,feat1,feat2,type1="gene",type2="gene", assay.name="
 #' @importFrom grDevices pdf png dev.off
 #' @importFrom graphics par plot.new title
 #' @importFrom stats sd
+#' @importFrom utils packageVersion
 #' @details identify marker genes based on aov and AUC.
 #' @export
 ssc.plot.heatmap <- function(obj, assay.name="exprs",out.prefix=NULL,

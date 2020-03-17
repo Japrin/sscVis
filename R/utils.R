@@ -472,6 +472,40 @@ ssc.average.cell <- function(obj,assay.name="exprs",gene=NULL,column="majorClust
   }
 }
 
+
+#' calcualte the average expression of genes of each cell
+#' @param obj object of \code{singleCellExperiment} class
+#' @param assay.name character; which assay (default: "exprs")
+#' @param gene list; named list; NULL for all genes (default: NULL)
+#' @param ncell.downsample integer; for each group, number of cells downsample to. (default: NULL)
+#' @param avg character; average method. can be one of "mean", "diff", "zscore" . (default: "mean")
+#' @param ret.type character; return type. can be one of "data.melt", "data.cast", "data.mtx". (default: "data.melt")
+#' @importFrom plyr laply llply
+#' @importFrom Matrix colMeans
+#' @importFrom SummarizedExperiment rowData
+#' @importFrom SingleCellExperiment `reducedDims<-` reducedDims
+#' @details multiple average methods are implemented
+#' @export
+ssc.average.gene <- function(obj,assay.name="exprs",gene=NULL,ncell.downsample=NULL,
+                             avg="mean",ret.type="sce")
+{
+  if(is.null(gene)){
+    gene <- list("Score"=seq_len(nrow(obj)))
+  }else{
+    gene <- llply(gene,function(x){ match(x,rowData(obj)$display.name)  })
+  }
+  if(avg=="mean"){
+    mean.mtx <- laply(gene,function(x){ colMeans(assay(obj,assay.name)[x,,drop=F]) },.drop = F)
+    rownames(mean.mtx) <- names(gene)
+    obj.mean <- ssc.build(mean.mtx)
+    colData(obj.mean) <- colData(obj)
+    reducedDims(obj.mean) <- reducedDims(obj)
+    return(obj.mean)
+  }else{
+    return(NULL)
+  }
+}
+
 #' Convert display name (gene symbol) to gene id
 #' @importFrom SingleCellExperiment rowData
 #' @param obj object of \code{SingleCellExperiment} class
