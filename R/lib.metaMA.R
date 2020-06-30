@@ -160,8 +160,14 @@ collapseEffectSizeLong <- function(dat.long,mode.collapse="comb",group.2nd="grou
   }else if(mode.collapse=="comb"){
     aid.mapping.tb <- unique(dat.long[,c("aid",group.2nd),with=F])
     n.group.2nd <- aid.mapping.tb[,.N,by=group.2nd]
+	########
+	##
+	colidx.freq <- c()
+	if(all(c("freq._case","cluster.size") %in% colnames(dat.long))){
+		colidx.freq <- c("freq._case","cluster.size")
+	}
     dat.collapse.nOne <- dat.long[dat.long[[group.2nd]] %in% n.group.2nd[N==1,][[group.2nd]],
-                                  c("geneID",group.2nd,"dprime","vardprime","P.Value","adj.P.Val","sig"),with=F]
+                                  c("geneID",group.2nd,"dprime","vardprime","P.Value","adj.P.Val","sig",colidx.freq),with=F]
     dat.collapse.nMul <- as.data.table(ldply(n.group.2nd[N>1,][[group.2nd]],
                                              function(x){
                                                dat.x.es.combi.tb <- directEScombiFromLongTable(dat.long[dat.long[[group.2nd]]==x,])
@@ -174,6 +180,13 @@ collapseEffectSizeLong <- function(dat.long,mode.collapse="comb",group.2nd="grou
                                                                    sig=(dat.x.es.combi.tb[["comb.ES"]]>th.dprime &
                                                                           dat.x.es.combi.tb[["comb.padj"]]<th.adj.P))
                                                colnames(ret.tb)[2] <- group.2nd
+											   if(all(c("freq._case","cluster.size") %in% colnames(dat.long))){
+												   freq.collapsed.tb <- dat.long[dat.long[[group.2nd]]==x,
+																				 ][,.(freq._case=(sum(.SD$freq._case*.SD$cluster.size))/sum(.SD$cluster.size),
+																						  cluster.size=sum(.SD$cluster.size)),
+																						by="geneID"]
+												   ret.tb <- merge(ret.tb,freq.collapsed.tb,by="geneID")
+											   }
                                                return(ret.tb)
                                              }))
     dat.collapse <- rbind(dat.collapse.nOne,dat.collapse.nMul)

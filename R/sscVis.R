@@ -289,6 +289,7 @@ ssc.plot.tsne <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,split
 #' @importFrom graphics par plot.new title
 #' @importFrom S4Vectors `metadata<-` metadata
 #' @importFrom stats quantile
+#' @importFrom Matrix t
 #' @details If `gene` is not NULL, violin of the genes' expression will be plot; if columns in not
 #' NULL, colData of obj with names in `columns` will be plot in violin.
 #' @export
@@ -312,10 +313,10 @@ ssc.plot.violin <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,par
 		dat.violin <- simple.removeBatchEffect(dat.violin,batch=colData(obj)[[adjB]])
 	  }
       if(do.scale){
-        dat.violin <- t(scale(t(dat.violin)))
+        dat.violin <- t(scale(Matrix::t(dat.violin)))
       }
 
-	  dat.plot <- as.matrix(t(dat.violin))
+	  dat.plot <- as.matrix(Matrix::t(dat.violin))
 	  colnames(dat.plot) <- ssc.id2displayName(obj,colnames(dat.plot))
 	  dat.plot.df <- data.table::data.table(sample=rownames(dat.plot),stringsAsFactors = F)
 	  dat.plot.df <- cbind(dat.plot.df,as.data.frame(colData(obj)[,group.var,drop=F]))

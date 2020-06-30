@@ -178,14 +178,14 @@ run.cutreeDynamic <- function(dat,method.hclust="ward.D2",method.distance="spear
 #' @param dat data frame or matrix;
 #' @param method.hclust character; clustering method for hclust [default: "ward.D2"]
 #' @param method.distance character; distance method for hclust [default: "spearman"]
-#' @param k integer; number of clusters [default: 1]
+#' @param k integer; number of clusters [default: NULL]
 #' @param ... parameters passed to cutree
 #' @details cutree on rows of the given matrix
 #' @return a matrix with dimention as input ( samples in rows and variables in columns)
 #' @importFrom stats dist hclust as.dendrogram as.dist
 #' @importFrom dendextend color_branches cutree
 #' @export
-run.cutree <- function(dat,method.hclust="ward.D2",method.distance="spearman",k=1,
+run.cutree <- function(dat,method.hclust="ward.D2",method.distance="spearman",k=NULL,
 							  ...)
 {
 	#requireNamespace("dendextend")
@@ -291,7 +291,7 @@ ssc.assay.hclust <- function(obj,assay.name="exprs",
 {
     if(order.col && ncol(obj)>2)
     {
-		ret.col <- run.cutree(t(assay(obj,assay.name)),method.hclust=clustering.method,
+		ret.col <- run.cutree(t(as.matrix(assay(obj,assay.name))),method.hclust=clustering.method,
 							   method.distance=clustering.distance,k=k.col)
 
         obj <- obj[,ret.col$hclust$order]
@@ -317,7 +317,7 @@ ssc.assay.hclust <- function(obj,assay.name="exprs",
     }
     if(order.row && nrow(obj)>2)
 	{
-		ret.row <- run.cutree((assay(obj,assay.name)),method.hclust=clustering.method,
+		ret.row <- run.cutree(as.matrix(assay(obj,assay.name)),method.hclust=clustering.method,
 							   method.distance=clustering.distance,k=k.row)
 
         obj <- obj[ret.row$hclust$order,]
@@ -373,6 +373,7 @@ ssc.order <- function(obj,columns.order=NULL,gene.desc=NULL)
 #' @param ncell.downsample integer; for each group, number of cells downsample to. (default: NULL)
 #' @param avg character; average method. can be one of "mean", "diff", "zscore" . (default: "mean")
 #' @param ret.type character; return type. can be one of "data.melt", "data.cast", "data.mtx". (default: "data.melt")
+#' @param do.parallel logical; parallel of ldply. (default: FALSE)
 #' @importFrom plyr ldply
 #' @importFrom Matrix rowMeans
 #' @importFrom DelayedArray DelayedArray
@@ -382,7 +383,7 @@ ssc.order <- function(obj,columns.order=NULL,gene.desc=NULL)
 #' @details multiple average methods are implemented
 #' @export
 ssc.average.cell <- function(obj,assay.name="exprs",gene=NULL,column="majorCluster",ncell.downsample=NULL,
-                             avg="mean",ret.type="data.melt")
+                             avg="mean",ret.type="data.melt",do.parallel=F)
 {
   if(!all(column %in% colnames(colData(obj)))){
     warning(sprintf("some column(s) not in the obj: %s \n",column))
@@ -440,7 +441,7 @@ ssc.average.cell <- function(obj,assay.name="exprs",gene=NULL,column="majorClust
       dat.ret$avg[is.na(dat.ret$avg)] <- 0
       return(dat.ret)
     }
-  }))
+  },.parallel=do.parallel))
   
   if(ret.type=="data.melt"){
     return(data.melt.df)
@@ -663,6 +664,11 @@ ssc.toLongTable <- function(obj,gene.id,gene.symbol,assay.name=NULL,col.idx=NULL
 		dat.extra.tb <- cbind(data.table(aid=colnames(obj)),
 							  as.data.frame(colData(obj)[,col.idx,drop=F]))
 		dat.long <- merge(dat.long,dat.extra.tb,by="aid")
+	}
+	## cluster size
+	if("nCellsCluster" %in% colnames(colData(obj))){
+		aid2size <- structure(obj[["nCellsCluster"]],names=colnames(obj))
+		dat.long[,cluster.size:=aid2size[aid]]
 	}
 
 	return(dat.long)

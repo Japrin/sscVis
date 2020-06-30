@@ -8,7 +8,7 @@ run.cutree(
   dat,
   method.hclust = "ward.D2",
   method.distance = "spearman",
-  k = 1,
+  k = NULL,
   ...
 )
 }
@@ -19,7 +19,7 @@ run.cutree(
 
 \item{method.distance}{character; distance method for hclust [default: "spearman"]}
 
-\item{k}{integer; number of clusters [default: 1]}
+\item{k}{integer; number of clusters [default: NULL]}
 
 \item{...}{parameters passed to cutree}
 }

@@ -11,7 +11,8 @@ ssc.average.cell(
   column = "majorCluster",
   ncell.downsample = NULL,
   avg = "mean",
-  ret.type = "data.melt"
+  ret.type = "data.melt",
+  do.parallel = F
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ ssc.average.cell(
 \item{avg}{character; average method. can be one of "mean", "diff", "zscore" . (default: "mean")}
 
 \item{ret.type}{character; return type. can be one of "data.melt", "data.cast", "data.mtx". (default: "data.melt")}
+
+\item{do.parallel}{logical; parallel of ldply. (default: FALSE)}
 }
 \description{
 calcualte the average expression of cells of each group
