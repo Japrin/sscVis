@@ -24,6 +24,7 @@ ssc.plot.tsne(
   label = NULL,
   par.repel = list(force = 1),
   vector.friendly = F,
+  par.geom_point = list(),
   par.legend = list(),
   theme.use = theme_bw,
   legend.w = 1,
@@ -75,6 +76,8 @@ ssc.plot.tsne(
 \item{par.repel}{list; passed to geom_text_repel}
 
 \item{vector.friendly}{logical; output vector friendly figure (default: FALSE)}
+
+\item{par.geom_point}{list; extra parameters for geom_point/geom_point_rast; (default: list())}
 
 \item{par.legend}{list; lengend parameters, used to overwrite the default setting; (default: list())}
 

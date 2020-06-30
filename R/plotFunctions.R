@@ -74,6 +74,7 @@ getColorPaletteFromNameContinuous <- function(palette.name="YlOrRd"){
 #' @param clamp integer vector; expression values will be clamped to the range defined by this parameter, such as c(0,15). (default: NULL )
 #' @param scales character; whether use the same scale across genes. one of "fixed" or "free" (default: "fixed")
 #' @param vector.friendly logical; output vector friendly figure (default: FALSE)
+#' @param par.geom_point list; extra parameters for geom_point/geom_point_rast; (default: list())
 #' @param par.legend list; lengend parameters, used to overwrite the default setting; (default: list())
 #' @param splitBy character; split by (default: NULL)
 #' @details For genes contained in both `Y` and `gene.to.show`, show their expression on the tSNE
@@ -84,7 +85,7 @@ ggGeneOnTSNE <- function(Y,dat.map,gene.to.show,out.prefix=NULL,p.ncol=3,theme.u
                          xlim=NULL,ylim=NULL,size=NULL,pt.alpha=0.5,pt.order="value",clamp=NULL,
                          palette.name="YlOrRd",
                          width=9,height=8,scales="fixed",vector.friendly=F,
-                         par.legend=list(),splitBy=NULL){
+                         par.geom_point=list(),par.legend=list(),splitBy=NULL){
   #suppressPackageStartupMessages(require("data.table"))
   #requireNamespace("ggplot2",quietly = T)
   #requireNamespace("RColorBrewer",quietly = T)
@@ -139,9 +140,13 @@ ggGeneOnTSNE <- function(Y,dat.map,gene.to.show,out.prefix=NULL,p.ncol=3,theme.u
 							my.ggPoint <- geom_point
 						}
 						p <- ggplot2::ggplot(.dd,aes_string("Dim1","Dim2"))+
-							my.ggPoint(aes(colour=value),
-									   size=if(is.null(size)) auto.point.size(npts)*1.1 else size,
-									   alpha=pt.alpha,stroke=0,shape=16) +
+							do.call(my.ggPoint,c(list(mapping=aes(colour=value),
+													size=if(is.null(size)) auto.point.size(npts)*1.1 else size,
+													alpha=pt.alpha,stroke=0,shape=16),
+												 par.geom_point))+
+							#my.ggPoint(aes(colour=value),
+							#		   size=if(is.null(size)) auto.point.size(npts)*1.1 else size,
+							#		   alpha=pt.alpha,stroke=0,shape=16) +
 							labs(title=x, x ="", y = "")
 						if(!is.null(splitBy)){
 						  p <- p + ggplot2::facet_wrap(~splitBy,ncol = if(length(p.ncol)>1) p.ncol[2] else NULL)
@@ -261,6 +266,8 @@ plotDensity2D <- function(x,peaks=NULL)
 #' @param out.prefix character; output prefix.
 #' @param mytitle character; (default: "Heatmap")
 #' @param show.number logical; (default: NULL)
+#' @param gp.show.number object of gpar; (default: gpar() )
+#' @param my.cell_fun function; cell_fun of Heatmap (default: NULL )
 #' @param do.clust logical, character or dendrogram; passed to both cluster_columns and cluster_rows of Heatmap. Higher priority than clust.row and clust.column (default: NULL)
 #' @param clust.row logical, character or dendrogram; passed to cluster_rows of Heatmap (default: FALSE)
 #' @param clust.column logical, character or dendrogram; passed to cluster_columns of Heatmap (default: FALSE)
@@ -271,6 +278,7 @@ plotDensity2D <- function(x,peaks=NULL)
 #' @param z.hi double; (default: NULL)
 #' @param z.len integer; (default: 100)
 #' @param col.ht vector; (default: NULL)
+#' @param top_annotation passed to Heatmap; (default: NULL)
 #' @param palatte character; (default: NULL)
 #' @param row.ann.dat data.frame; data for row annotation; (default: NULL)
 #' @param row.split vector; used for row; (default: NULL)
@@ -297,13 +305,15 @@ plotDensity2D <- function(x,peaks=NULL)
 #' @importFrom gridBase baseViewports
 #' @details plot matrix
 #' @export
-plotMatrix.simple <- function(dat,out.prefix=NULL,mytitle="Heatmap",show.number=NULL,
+plotMatrix.simple <- function(dat,out.prefix=NULL,mytitle="Heatmap",
+							  show.number=NULL,gp.show.number=gpar(),my.cell_fun=NULL,
                                do.clust=NULL,z.lo=NULL,z.hi=NULL,z.len=100,palatte=NULL,
                                clust.row=FALSE,clust.column=FALSE,show.dendrogram=FALSE,
                                waterfall.row=FALSE,waterfall.column=FALSE,
                                row.ann.dat=NULL,row.split=NULL,returnHT=FALSE,
                                par.legend=list(),par.heatmap=list(),col.ht=NULL,
-							                 par.warterfall=list(score.alpha=1.5,do.norm=T),
+			       top_annotation=NULL,
+			       par.warterfall=list(score.alpha=1.5,do.norm=T),
                                pdf.width=8,pdf.height=8,fig.type="pdf",exp.name="Count",...)
 {
     #requireNamespace("gplots")
@@ -348,12 +358,14 @@ plotMatrix.simple <- function(dat,out.prefix=NULL,mytitle="Heatmap",show.number=
     if(is.null(z.lo)){ z.lo <- tmp.var[1] }
     if(is.null(z.hi)){ z.hi <- tmp.var[length(tmp.var)] }
 
-    my.cell_fun <- NULL
-	if(!is.null(show.number)){
-		if(is.logical(show.number) && show.number==T){
-			my.cell_fun <- function(j, i, x, y, w, h, col) { grid.text(dat[i, j], x, y) }
-		}else if(is.matrix(show.number)){
-			my.cell_fun <- function(j, i, x, y, w, h, col) { grid.text(show.number[i, j], x, y) }
+    #my.cell_fun <- NULL
+	if(is.null(my.cell_fun)){
+		if(!is.null(show.number)){
+			if(is.logical(show.number) && show.number==T){
+				my.cell_fun <- function(j, i, x, y, w, h, col) { grid.text(dat[i, j], x, y, gp = gp.show.number ) }
+			}else if(is.matrix(show.number)){
+				my.cell_fun <- function(j, i, x, y, w, h, col) { grid.text(show.number[i, j], x, y,gp=gp.show.number) }
+			}
 		}
 	}
     m <- ncol(dat)
@@ -382,23 +394,34 @@ plotMatrix.simple <- function(dat,out.prefix=NULL,mytitle="Heatmap",show.number=
 	}
 	.cex.row <- par.heatmap.used[["cex.row"]]
 	.cex.column <- par.heatmap.used[["cex.column"]]
+	par.heatmap.used[["cex.row"]] <- NULL
+	par.heatmap.used[["cex.column"]] <- NULL
+
+	if(!("column_names_gp" %in% names(par.heatmap.used))){
+		par.heatmap.used[["column_names_gp"]] = gpar(fontsize = 12*28*.cex.column/max(m,32))
+	}
+	if(!("row_names_gp" %in% names(par.heatmap.used))){
+		par.heatmap.used[["row_names_gp"]] = gpar(fontsize = 10*28*.cex.row/max(n,32))
+	}
 
     if(!is.null(row.split)){
         row.split <- row.split[rownames(dat)]
     }
 
-    ht <- ComplexHeatmap::Heatmap(dat, name = mytitle,
+    ht <- do.call(ComplexHeatmap::Heatmap,c(list(matrix=dat, name = mytitle,
                   col = if(is.null(col.ht)) colorRamp2(seq(z.lo,z.hi,length=z.len), colorRampPalette(palatte)(z.len)) else col.ht,
                   cluster_columns=clust.column,cluster_rows=clust.row,
                   row_dend_reorder = FALSE, column_dend_reorder = FALSE,
-                  column_names_gp = gpar(fontsize = 12*28*.cex.column/max(m,32)),
-                  row_names_gp = gpar(fontsize = 10*28*.cex.row/max(n,32)),
+                  #column_names_gp = gpar(fontsize = 12*28*.cex.column/max(m,32)),
+                  #row_names_gp = gpar(fontsize = 10*28*.cex.row/max(n,32)),
                   #row_dend_width = unit(4, "cm"),
                   #column_dend_height = unit(4, "cm"),
                   show_row_dend = show.dendrogram,
                   show_column_dend = show.dendrogram,
                   heatmap_legend_param = par.legend.used,
-                  cell_fun = my.cell_fun,...)
+		  top_annotation = top_annotation,
+                  cell_fun = my.cell_fun),
+										par.heatmap.used))
     if(!is.null(row.ann.dat)){
         for(idx in colnames(row.ann.dat)){
             idx.col <- NULL
@@ -417,7 +440,7 @@ plotMatrix.simple <- function(dat,out.prefix=NULL,mytitle="Heatmap",show.number=
     }
 
     if(!is.null(out.prefix)){
-        ComplexHeatmap::draw(ht, newpage= FALSE,merge_legends = TRUE,split=row.split)
+        ComplexHeatmap::draw(ht, newpage= FALSE,merge_legends = TRUE,split=row.split,...)
         dev.off()
         #par(opar)
     }

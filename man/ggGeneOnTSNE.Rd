@@ -22,6 +22,7 @@ ggGeneOnTSNE(
   height = 8,
   scales = "fixed",
   vector.friendly = F,
+  par.geom_point = list(),
   par.legend = list(),
   splitBy = NULL
 )
@@ -61,6 +62,8 @@ should be sample id}
 \item{scales}{character; whether use the same scale across genes. one of "fixed" or "free" (default: "fixed")}
 
 \item{vector.friendly}{logical; output vector friendly figure (default: FALSE)}
+
+\item{par.geom_point}{list; extra parameters for geom_point/geom_point_rast; (default: list())}
 
 \item{par.legend}{list; lengend parameters, used to overwrite the default setting; (default: list())}
 

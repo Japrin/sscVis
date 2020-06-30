@@ -46,6 +46,7 @@ ssc.plot.silhouette <- function(obj,cluster.label,reducedDim.name="iCor.tsne",do
 #' @param par.repel list; passed to geom_text_repel
 #' @param par.geneOnTSNE character; other parameters of geneOnTSNE
 #' @param vector.friendly logical; output vector friendly figure (default: FALSE)
+#' @param par.geom_point list; extra parameters for geom_point/geom_point_rast; (default: list())
 #' @param par.legend list; lengend parameters, used to overwrite the default setting; (default: list())
 #' @param theme.use function; which theme to use (default: theme_bw)
 #' @param legend.w numeric; adjust legend width (default: 1)
@@ -72,7 +73,8 @@ ssc.plot.tsne <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,split
                              plotDensity=F, colSet=list(),
                              reduced.name="iCor.tsne",reduced.dim=c(1,2),xlim=NULL,ylim=NULL,size=NULL,
                              palette.name="YlOrRd",adjB=NULL,clamp="none",do.scale=FALSE,
-                             label=NULL,par.repel=list(force=1),vector.friendly=F,par.legend=list(),
+                             label=NULL,par.repel=list(force=1),
+							 vector.friendly=F,par.geom_point=list(),par.legend=list(),
                              theme.use=theme_bw,legend.w=1,verbose=F,
                              par.geneOnTSNE=list(scales="free",pt.order="value",pt.alpha=0.1),
                              out.prefix=NULL,p.ncol=3,width=NA,height=NA,base_aspect_ratio=1.1,peaks=NULL)
@@ -129,9 +131,13 @@ ssc.plot.tsne <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,split
 			  my.ggPoint <- geom_point
 		  }
           p <- ggplot2::ggplot(dat.plot,aes(Dim1,Dim2)) +
-            my.ggPoint(aes_string(colour=cc),
-                       show.legend=if(!is.numeric(dat.plot[,cc]) && nvalues>40) F else NA,
-                       size=if(is.null(size)) auto.point.size(npts)*1.1 else size) +
+			  do.call(my.ggPoint,c(list(mapping=aes_string(colour=cc),
+									  show.legend=if(!is.numeric(dat.plot[,cc]) && nvalues>40) F else NA,
+									  size=if(is.null(size)) auto.point.size(npts)*1.1 else size),
+								   par.geom_point)) +
+            #my.ggPoint(aes_string(colour=cc),
+            #           show.legend=if(!is.numeric(dat.plot[,cc]) && nvalues>40) F else NA,
+            #           size=if(is.null(size)) auto.point.size(npts)*1.1 else size) +
             labs(x=sprintf("Dim%d",reduced.dim[1]),y=sprintf("Dim%d",reduced.dim[2]))
           if(!is.null(label)){
               dat.plot.label <- as.data.table(dat.plot)[,.(Dim1=median(.SD$Dim1),
@@ -219,13 +225,14 @@ ssc.plot.tsne <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,split
   }
   if(!is.null(gene)){
     if(length(gene)==1 && file.exists(gene)){ gene <- read.table(gene,header = T)[,1] }
-    if(all(!(gene %in% rownames(obj)))){
-      ### gene symbol?
-      gene <- ssc.displayName2id(obj,display.name = gene)
-    }
-    if(is.null(names(gene))){
-      names(gene) <- gene
-    }
+    #if(all(!(gene %in% rownames(obj)))){
+    #  ### gene symbol?
+    #  gene <- ssc.displayName2id(obj,display.name = gene)
+    #}
+    #if(is.null(names(gene))){
+    #  names(gene) <- gene
+    #}
+    gene <- ssc.displayName2id(obj,display.name = gene)
 
     dat.onTSNE <- assay(obj,assay.name)[gene,,drop=F]
     if(!is.null(adjB)){
@@ -238,7 +245,7 @@ ssc.plot.tsne <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,split
                                      p.ncol=p.ncol,xlim=xlim,ylim=ylim,
                                      size=size,width=width,height=height,palette.name=palette.name,
                                      clamp=clamp,vector.friendly=vector.friendly,theme.use=theme.use,
-                                     par.legend=par.legend,
+                                     par.geom_point=par.geom_point,par.legend=par.legend,
                                      splitBy=if(is.null(splitBy)) NULL else obj[[splitBy]],
                                      out.prefix=out.prefix),
                                 par.geneOnTSNE))

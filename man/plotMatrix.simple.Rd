@@ -9,6 +9,8 @@ plotMatrix.simple(
   out.prefix = NULL,
   mytitle = "Heatmap",
   show.number = NULL,
+  gp.show.number = gpar(),
+  my.cell_fun = NULL,
   do.clust = NULL,
   z.lo = NULL,
   z.hi = NULL,
@@ -25,6 +27,7 @@ plotMatrix.simple(
   par.legend = list(),
   par.heatmap = list(),
   col.ht = NULL,
+  top_annotation = NULL,
   par.warterfall = list(score.alpha = 1.5, do.norm = T),
   pdf.width = 8,
   pdf.height = 8,
@@ -41,6 +44,10 @@ plotMatrix.simple(
 \item{mytitle}{character; (default: "Heatmap")}
 
 \item{show.number}{logical; (default: NULL)}
+
+\item{gp.show.number}{object of gpar; (default: gpar() )}
+
+\item{my.cell_fun}{function; cell_fun of Heatmap (default: NULL )}
 
 \item{do.clust}{logical, character or dendrogram; passed to both cluster_columns and cluster_rows of Heatmap. Higher priority than clust.row and clust.column (default: NULL)}
 
@@ -73,6 +80,8 @@ plotMatrix.simple(
 \item{par.heatmap}{list; other heatmap parameters, (default: list())}
 
 \item{col.ht}{vector; (default: NULL)}
+
+\item{top_annotation}{passed to Heatmap; (default: NULL)}
 
 \item{par.warterfall}{list; parameters for warterfall, sucah as score.alpha}
 

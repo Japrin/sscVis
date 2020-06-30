@@ -134,7 +134,16 @@ run.cutreeDynamic <- function(dat,method.hclust="ward.D2",method.distance="spear
 		},error = function(e){
 			cat("using spearman/pearson as distance failed;try to fall back to use euler distance ... \n");
 		})
-    }
+    }else if(method.distance=="cosine"){
+		    tryCatch({
+			sim <- dat / sqrt(rowSums(dat * dat))
+			sim <- sim %*% t(sim)
+			obj.distM <- as.dist(1 - sim)
+			obj.hclust <- stats::hclust(obj.distM, method=method.hclust)
+		    },error=function(e){
+			cat("using spearman/pearson as distance failed;try to fall back to use euler distance ... \n");
+		    })
+		}
     if(is.null(obj.hclust)){
 		obj.distM <- stats::dist(dat)
 		obj.hclust <- stats::hclust(obj.distM,method.hclust)
@@ -201,6 +210,15 @@ run.cutree <- function(dat,method.hclust="ward.D2",method.distance="spearman",k=
 			},error = function(e){
 				cat("using spearman/pearson as distance failed;try to fall back to use euler distance ... \n");
 			})
+		}else if(method.distance=="cosine"){
+		    tryCatch({
+			sim <- dat / sqrt(rowSums(dat * dat))
+			sim <- sim %*% t(sim)
+			obj.distM <- as.dist(1 - sim)
+			obj.hclust <- stats::hclust(obj.distM, method=method.hclust)
+		    },error=function(e){
+			cat("using spearman/pearson as distance failed;try to fall back to use euler distance ... \n");
+		    })
 		}
 		if(is.null(obj.hclust)){
 			obj.distM <- stats::dist(dat)
@@ -208,7 +226,7 @@ run.cutree <- function(dat,method.hclust="ward.D2",method.distance="spearman",k=
 		}
 		obj.dend <- as.dendrogram(obj.hclust)
 		cluster <- cutree(obj.hclust,k=k,...)
-        colSet.cls <- auto.colSet(length(unique(cluster)),"Paired")
+		colSet.cls <- auto.colSet(length(unique(cluster)),"Paired")
 		branch <- dendextend::color_branches(obj.dend,clusters=cluster[order.dendrogram(obj.dend)],col=colSet.cls)
 		branch <- dendextend::set(branch,"branches_lwd", 1.5)
 
