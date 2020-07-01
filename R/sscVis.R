@@ -552,12 +552,14 @@ ssc.plot.cor <- function(obj,feat1,feat2,type1="gene",type2="gene", assay.name="
 #' @param do.clustering.col logical; wheter order columns (default: TRUE)
 #' @param dend.col dendrogram of the columns, 'cluster_columns' of ComplexHeatmap::Heatmap  (default: FALSE)
 #' @param dend.row dendrogram of the rows, 'cluster_rows' of ComplexHeatmap::Heatmap (default: FALSE)
-#' @param clustering.distance character; one of spearmn, pearson and euclidean (default: "spearman")
+#' @param clustering.distance character; one of spearmn, pearson, cosine and euclidean (default: "spearman")
 #' @param clustering.method character; method for hclust (default: "complete")
 #' @param k.row integer; number of clusters in the rows (default: 1)
 #' @param k.col integer; number of clusters in the columns (default: 1)
 #' @param returnHT logical; whether return HT; (default: FALSE)
 #' @param palette.name character; which palette to use, such as "RdBu","RdYlBu" (default: NULL)
+#' @param palette.ann.numeric character; which palette to use, such as "RdBu","RdYlBu" (default: "RdYlBu")
+#' @param Y.level.ann.numeric vector; value range for numeric annotation (default: NULL)
 #' @param row.split vector; used for row; must be named or is corresponding to the rows of obj (default: NULL)
 #' @param column.split vector; used for column; (default: NULL)
 #' @param annotation_legend_param list; (default: list())
@@ -587,7 +589,9 @@ ssc.plot.heatmap <- function(obj, assay.name="exprs",out.prefix=NULL,
                              clustering.distance="spearman",clustering.method="complete",
 							               k.row=1,k.col=1,
 							               returnHT=FALSE,
-                             palette.name=NULL,row.split=NULL,column.split=NULL,
+                             palette.name=NULL,
+			     palette.ann.numeric="RdYlBu",Y.level.ann.numeric=NULL,
+			     row.split=NULL,column.split=NULL,
                              annotation_legend_param=list(),ann.bar.height=1.5, mytitle="",...)
 {
     #requireNamespace("ComplexHeatmap")
@@ -622,7 +626,7 @@ ssc.plot.heatmap <- function(obj, assay.name="exprs",out.prefix=NULL,
                                 # order.row=if(is.logical(dend.row) && FALSE==dend.row) do.clustering.row else FALSE,
                                 order.col = do.clustering.col,
                                 order.row = do.clustering.row,
-                                clustering.distance="spearman",clustering.method=clustering.method,
+                                clustering.distance=clustering.distance,clustering.method=clustering.method,
                                 k.row=1,k.col=1)
     }else{
         avg.colDat <- unique((colData(obj)[,unique(c(ave.by,columns,columns.order)),drop=F]))
@@ -634,7 +638,7 @@ ssc.plot.heatmap <- function(obj, assay.name="exprs",out.prefix=NULL,
         #     colData(obj) <- avg.colDat[colnames(obj),,drop=F]
         # }
         obj <- ssc.assay.hclust(obj,assay.name,order.col=do.clustering.col,order.row=do.clustering.row,
-                                clustering.distance="spearman",clustering.method=clustering.method)
+                                clustering.distance=clustering.distance,clustering.method=clustering.method)
     }
 
     #### visualization of annotation on top of heatmap
@@ -646,36 +650,56 @@ ssc.plot.heatmap <- function(obj, assay.name="exprs",out.prefix=NULL,
             obj <- ssc.order(obj,columns.order=columns.order)
         }
         annDF <- as.data.frame(colData(obj)[columns])
-        if(length(colSet)==0) {
-            for(i in seq_along(columns)){
-                x <- columns[i]
-                if(class(colData(obj)[,x])=="numeric"){
-                    if(all(colData(obj)[,x]<=1) && all(colData(obj)[,x]>=0)){
-                        Y.level <- c(0,1)
-                    }else{
-                        Y.level <- pretty(colData(obj)[,x],n=8)
-                    }
-                    # continious version
-                    colSet[[x]] <- colorRamp2(seq(Y.level[1],Y.level[length(Y.level)],length=7),
-                                              rev(brewer.pal(n = 7, name = "RdYlBu")),
-                                              space="LAB")
-                    annotation_legend_param[[x]] <- list(color_bar="continuous",
-                                                         legend_direction="horizontal",
-                                                         legend_width=unit(4, "cm"),
-                                                         legend_height=unit(2, "cm"))
-                }else{
-                    group.value <- sort(unique(colData(obj)[,x]))
-                    colSet[[x]] <- structure(auto.colSet(length(group.value),name="Accent"),
-                                             names=as.character(group.value))
-                }
-            }
-        }
+        ###if(length(colSet)==0)
+	for(i in seq_along(columns))
+	{
+	    x <- columns[i]
+	    if(!x %in% names(colSet))
+	    {
+		if(class(colData(obj)[,x])=="numeric"){
+		    if(!is.null(Y.level.ann.numeric)){
+			Y.level <- Y.level.ann.numeric
+		    }else{
+			if(all(colData(obj)[,x]<=1) && all(colData(obj)[,x]>=0)){
+			    Y.level <- c(0,1)
+			}else{
+			    Y.level <- pretty(colData(obj)[,x],n=8)
+			}
+		    }
+		    # continious version
+		    palette.ann.numeric.values <- getColorPaletteFromNameContinuous(palette.ann.numeric)
+		    colSet[[x]] <- colorRamp2(seq(Y.level[1],Y.level[length(Y.level)],
+						  length=length(palette.ann.numeric.values)),
+					      ##rev(brewer.pal(n = 7, name = "RdYlBu")),
+					      palette.ann.numeric.values,
+					      space="LAB")
+		    if(is.null(annotation_legend_param[[x]])){
+			annotation_legend_param[[x]] <- list(color_bar="continuous",
+							     legend_direction="horizontal",
+							     legend_width=unit(4, "cm"),
+							     legend_height=unit(2, "cm"))
+		    }else{
+			annotation_legend_param[[x]] <- c(annotation_legend_param[[x]],
+							  list(color_bar="continuous",
+							     legend_direction="horizontal",
+							     legend_width=unit(4, "cm"),
+							     legend_height=unit(2, "cm")))
+		    }
+		}else{
+		    group.value <- sort(unique(colData(obj)[,x]))
+		    colSet[[x]] <- structure(auto.colSet(length(group.value),name="Accent"),
+					     names=as.character(group.value))
+		}
+	    }
+	}
 
         g.show.legend <- T
+	#print(str(annDF))
+	#print(str(colSet))
         ha.col <- ComplexHeatmap::HeatmapAnnotation(df = annDF, col = colSet,
                                     show_legend = g.show.legend,
-									                  #simple_anno_size = unit(ann.bar.height, "cm"),
-									                  annotation_height = unit(rep(ann.bar.height,ncol(annDF)), "cm"),
+				    #simple_anno_size = unit(ann.bar.height, "cm"),
+				    annotation_height = unit(rep(ann.bar.height,ncol(annDF)), "cm"),
                                     annotation_legend_param = annotation_legend_param)
         ###top_annotation_height <- unit(ann.bar.height * ncol(annDF), "cm")
     }

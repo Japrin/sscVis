@@ -31,6 +31,8 @@ ssc.plot.heatmap(
   k.col = 1,
   returnHT = FALSE,
   palette.name = NULL,
+  palette.ann.numeric = "RdYlBu",
+  Y.level.ann.numeric = NULL,
   row.split = NULL,
   column.split = NULL,
   annotation_legend_param = list(),
@@ -80,7 +82,7 @@ ssc.plot.heatmap(
 
 \item{dend.row}{dendrogram of the rows, 'cluster_rows' of ComplexHeatmap::Heatmap (default: FALSE)}
 
-\item{clustering.distance}{character; one of spearmn, pearson and euclidean (default: "spearman")}
+\item{clustering.distance}{character; one of spearmn, pearson, cosine and euclidean (default: "spearman")}
 
 \item{clustering.method}{character; method for hclust (default: "complete")}
 
@@ -91,6 +93,10 @@ ssc.plot.heatmap(
 \item{returnHT}{logical; whether return HT; (default: FALSE)}
 
 \item{palette.name}{character; which palette to use, such as "RdBu","RdYlBu" (default: NULL)}
+
+\item{palette.ann.numeric}{character; which palette to use, such as "RdBu","RdYlBu" (default: "RdYlBu")}
+
+\item{Y.level.ann.numeric}{vector; value range for numeric annotation (default: NULL)}
 
 \item{row.split}{vector; used for row; must be named or is corresponding to the rows of obj (default: NULL)}
 

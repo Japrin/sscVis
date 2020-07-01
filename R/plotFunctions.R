@@ -409,7 +409,8 @@ plotMatrix.simple <- function(dat,out.prefix=NULL,mytitle="Heatmap",
     }
 
     ht <- do.call(ComplexHeatmap::Heatmap,c(list(matrix=dat, name = mytitle,
-                  col = if(is.null(col.ht)) colorRamp2(seq(z.lo,z.hi,length=z.len), colorRampPalette(palatte)(z.len)) else col.ht,
+                  col = if(is.null(col.ht)) colorRamp2(seq(z.lo,z.hi,length=z.len),
+						       colorRampPalette(palatte)(z.len)) else col.ht,
                   cluster_columns=clust.column,cluster_rows=clust.row,
                   row_dend_reorder = FALSE, column_dend_reorder = FALSE,
                   #column_names_gp = gpar(fontsize = 12*28*.cex.column/max(m,32)),
