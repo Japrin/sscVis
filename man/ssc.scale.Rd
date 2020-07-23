@@ -10,7 +10,9 @@ ssc.scale(
   gene.symbol,
   assay.name = "norm_exprs",
   adjB = NULL,
-  do.scale = F
+  do.scale = F,
+  val.padding = 0,
+  add.padding = F
 )
 }
 \arguments{
@@ -25,6 +27,10 @@ ssc.scale(
 \item{adjB}{character; batch column of the colData(obj). (default: NULL)}
 
 \item{do.scale}{logical; whether scale the data. (default: F)}
+
+\item{val.padding}{double; padding value. (default: 0)}
+
+\item{add.padding}{logical; whether assign padding value for genes not in obj. (default: F)}
 }
 \description{
 scale the data

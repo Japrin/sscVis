@@ -408,7 +408,7 @@ ssc.average.cell <- function(obj,assay.name="exprs",gene=NULL,column="majorClust
     return(NULL)
   }
   if(!is.null(gene)){
-    obj <- obj[gene,]
+    obj <- obj[intersect(gene,rownames(obj)),]
   }
   
   #### downsample cells
@@ -473,13 +473,13 @@ ssc.average.cell <- function(obj,assay.name="exprs",gene=NULL,column="majorClust
     dat.df <- dcast(data.melt.df,sprintf("geneID~%s",paste0(column,collapse = "+")),value.var="avg")
     dat.mtx <- as.matrix(dat.df[,-1])
     rownames(dat.mtx) <- dat.df[[1]]
-    dat.mtx <- dat.mtx[rownames(obj),]
+    dat.mtx <- dat.mtx[rownames(obj),,drop=F]
     return(dat.mtx)
   }else if(ret.type=="sce"){
     dat.df <- dcast(data.melt.df,sprintf("geneID~%s",paste0(column,collapse = "+")),value.var="avg")
     dat.mtx <- as.matrix(dat.df[,-1])
     rownames(dat.mtx) <- dat.df[[1]]
-    dat.mtx <- dat.mtx[rownames(obj),]
+    dat.mtx <- dat.mtx[rownames(obj),,drop=F]
     obj.ret <- ssc.build(dat.mtx,assay.name=assay.name,display.name=rowData(obj)$display.name)
     obj.ret.colDat <- unique(data.melt.df[,column,with=F])
     obj.ret.colDat$cid <- do.call(paste, c(obj.ret.colDat, list(sep = '_')))
@@ -780,10 +780,13 @@ ssc.moduleScore <- function(obj, features, pool = NULL,
 #' @param assay.name character; which assay (default: "exprs")
 #' @param adjB character; batch column of the colData(obj). (default: NULL)
 #' @param do.scale logical; whether scale the data. (default: F)
+#' @param add.padding logical; whether assign padding value for genes not in obj. (default: F)
+#' @param val.padding double; padding value. (default: 0)
 #' @details scale the data specified in assay.name, then store the scaled data to ${assay.name}.scale. One of gene.id and gene.symbol must be provided.
 #' @importFrom SummarizedExperiment `assay<-` assay
 #' @export
-ssc.scale <- function(obj,gene.id,gene.symbol,assay.name="norm_exprs",adjB=NULL,do.scale=F)
+ssc.scale <- function(obj,gene.id,gene.symbol,assay.name="norm_exprs",adjB=NULL,do.scale=F,
+		      val.padding=0,add.padding=F)
 {
 	if(missing(gene.id) && missing(gene.symbol)){
 		warning("No gene.id or gene.symbol provided!")
@@ -796,8 +799,7 @@ ssc.scale <- function(obj,gene.id,gene.symbol,assay.name="norm_exprs",adjB=NULL,
 		
 		gene.list <- rowData(obj)[,"display.name"][which(rowData(obj)[,"display.name"] %in% gene.symbol)]
 	}else{
-		gene.id <- intersect(gene.id,rownames(obj))
-		gene.list <- rowData(obj)[,"display.name"][gene.id]
+		gene.list <- rowData(obj)[,"display.name"][intersect(gene.id,rownames(obj))]
 	}
 	if(length(gene.list)==0){ 
 		warning("No data found for the provided genes!")
@@ -811,7 +813,39 @@ ssc.scale <- function(obj,gene.id,gene.symbol,assay.name="norm_exprs",adjB=NULL,
 	if(do.scale){
 		dat.block <- t(scale(t(dat.block)))
 	}
+	##
+	f.na <- is.na(dat.block)
+	dat.block[f.na] <- val.padding
+	#######
 	assay(obj,sprintf("%s.scale",assay.name)) <- dat.block
+	if(add.padding==T)
+	{
+	    if(missing(gene.id) && !is.null(gene.symbol)){
+		gene.dropout <- setdiff(gene.symbol,gene.list)
+	    }else{
+		gene.dropout <- setdiff(gene.id,names(gene.list))
+	    }
+	    if(length(gene.dropout)>0){
+		dropout.mtx <- matrix(rep(val.padding,length(gene.dropout)*ncol(dat.block)),nrow=length(gene.dropout))
+		rownames(dropout.mtx) <- gene.dropout
+		##dat.block <- rbind(dat.block,dropout.mtx)
+	    
+		aname.all <- assayNames(obj)
+		obj.ext <- ssc.build(rbind(assay(obj,aname.all[1]),dropout.mtx),
+				     display.name=c(rowData(obj)$display.name,
+						    structure(gene.dropout,names=gene.dropout)),
+				     assay.name=aname.all[1])
+
+		if(length(aname.all)>1){
+		    for(i in 2:length(aname.all)){
+			assay(obj.ext,aname.all[i]) <- rbind(assay(obj,aname.all[i]),dropout.mtx)
+		    }
+		}
+		colData(obj.ext) <- colData(obj)
+		reducedDims(obj.ext) <- reducedDims(obj)
+		obj <- obj.ext
+	    }
+	}
 	return(obj)
 }
 
