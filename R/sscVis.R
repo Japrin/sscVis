@@ -754,7 +754,7 @@ ssc.plot.heatmap <- function(obj, assay.name="exprs",out.prefix=NULL,
     }
     ht <- do.call(plotMatrix.simple,c(list(dat=dat.plot,out.prefix=NULL,exp.name=exp.title,show.number=F,
                                            do.clust=NULL,z.lo=z.lo,z.hi=z.hi,palatte=exp.palette,
-                                           clust.row=FALSE,clust.column=FALSE,
+                                           ###clust.row=FALSE,clust.column=FALSE,
                                            returnHT=TRUE,
                                            par.legend=list(at = seq(z.lo,z.hi,z.step)),
                                            mytitle=mytitle, top_annotation = ha.col),
