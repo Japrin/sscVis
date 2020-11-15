@@ -866,35 +866,41 @@ ssc.plot.GeneDensity <- function(obj,out.prefix,gene.id,gene.symbol,assay.name="
 		title(xlab = gene.list[1])
 		.addAnn <- function()
 		{
-			abline(v=expT[1],col="red4",lty=2,lwd=1.5)
-			abline(h=expT[2],col="red4",lty=2,lwd=1.5)
-			nn <- sum(dat.plot$x >= expT[1] & dat.plot$y >= expT[2])
-			##mtext(text = sprintf("%4.2f %%\n(%d/%d)",nn*100/nrow(dat.plot),nn,nrow(dat.plot)),side = 3,line=-2.0,adj = 0.95,xpd=T)
-			text(par('usr')[2],par('usr')[4]-ann.txt.dis,
-				 labels = sprintf("%4.2f %%\n(%d/%d)", nn*100/nrow(dat.plot),nn,nrow(dat.plot)),
-				 adj = 1.1,xpd=T,cex=ann.txt.cex)
-			nn <- sum(dat.plot$x < expT[1] & dat.plot$y >= expT[2])
-			##mtext(text = sprintf("%4.2f %%\n(%d/%d)",nn*100/nrow(dat.plot),nn,nrow(dat.plot)),side = 3,line=-2.0,adj = 0.05,xpd=T)
-			text(expT[1],par('usr')[4]-ann.txt.dis,
-				 labels = sprintf("%4.2f %%\n(%d/%d)",nn*100/nrow(dat.plot),nn,nrow(dat.plot)),
-				 adj = 1.1,xpd=T,cex=ann.txt.cex)
-			nn <- sum(dat.plot$x < expT[1] & dat.plot$y < expT[2])
-			text(expT[1],expT[2]-ann.txt.dis,
-				 labels = sprintf("%4.2f %%\n(%d/%d)",nn*100/nrow(dat.plot),nn,nrow(dat.plot)),
-				 adj=1.1,xpd=T,cex=ann.txt.cex)
-			nn <- sum(dat.plot$x >= expT[1] & dat.plot$y < expT[2])
-			text(par('usr')[2],expT[2]-ann.txt.dis,
-				 labels = sprintf("%4.2f %%\n(%d/%d)",nn*100/nrow(dat.plot),nn,nrow(dat.plot)),
-				 adj=1.1,xpd=T,cex=ann.txt.cex)
-	#        mtext(text=sprintf("Pearson Cor: %4.2f (p value: %4.2e)",
-	#						   cor.pcc.out$estimate,cor.pcc.out$p.value),
-	#			  side=3,line=2.5,adj=0.5)
-	#        mtext(text=sprintf("Spearman Cor: %4.2f (p value: %4.2e)",
-	#						   cor.spe.out$estimate,cor.spe.out$p.value),
-	#			  side=3,line=1.5,adj=0.5)
-	#        mtext(text=sprintf("%s",sample.id),side=3,line=0.5,adj=0.5)
+		    abline(v=expT[1],col="red4",lty=2,lwd=1.5)
+		    abline(h=expT[2],col="red4",lty=2,lwd=1.5)
+		    ## contingency table
+		    cont.tb <- c()
+		    ### DP
+		    nn <- sum(dat.plot$x >= expT[1] & dat.plot$y >= expT[2])
+		    cont.tb <- c(cont.tb,nn)
+		    text(par('usr')[2],par('usr')[4]-ann.txt.dis,
+			     labels = sprintf("%4.2f %%\n(%d/%d)", nn*100/nrow(dat.plot),nn,nrow(dat.plot)),
+			     adj = 1.1,xpd=T,cex=ann.txt.cex)
+		    ### SP.1
+		    nn <- sum(dat.plot$x >= expT[1] & dat.plot$y < expT[2])
+		    cont.tb <- c(cont.tb,nn)
+		    text(par('usr')[2],expT[2]-ann.txt.dis,
+			     labels = sprintf("%4.2f %%\n(%d/%d)",nn*100/nrow(dat.plot),nn,nrow(dat.plot)),
+			     adj=1.1,xpd=T,cex=ann.txt.cex)
+		    ### SP.2
+		    nn <- sum(dat.plot$x < expT[1] & dat.plot$y >= expT[2])
+		    cont.tb <- c(cont.tb,nn)
+		    text(expT[1],par('usr')[4]-ann.txt.dis,
+			     labels = sprintf("%4.2f %%\n(%d/%d)",nn*100/nrow(dat.plot),nn,nrow(dat.plot)),
+			     adj = 1.1,xpd=T,cex=ann.txt.cex)
+		    ### DN
+		    nn <- sum(dat.plot$x < expT[1] & dat.plot$y < expT[2])
+		    cont.tb <- c(cont.tb,nn)
+		    text(expT[1],expT[2]-ann.txt.dis,
+			     labels = sprintf("%4.2f %%\n(%d/%d)",nn*100/nrow(dat.plot),nn,nrow(dat.plot)),
+			     adj=1.1,xpd=T,cex=ann.txt.cex)
+		    return(matrix(cont.tb,ncol=2))
 		}
-		.addAnn()
+		cont.mtx <- .addAnn()
+		res.fisher <- fisher.test(cont.mtx)
+		if(is.null(my.title)){
+		    my.title <- sprintf("OR:%4.4f, p: %4.4f", res.fisher$estimate,res.fisher$p.value)
+		}
 		box()
 
 		# right density plot
