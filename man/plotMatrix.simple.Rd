@@ -23,6 +23,7 @@ plotMatrix.simple(
   waterfall.column = FALSE,
   row.ann.dat = NULL,
   row.split = NULL,
+  column.split = NULL,
   returnHT = FALSE,
   par.legend = list(),
   par.heatmap = list(),
@@ -72,6 +73,8 @@ plotMatrix.simple(
 \item{row.ann.dat}{data.frame; data for row annotation; (default: NULL)}
 
 \item{row.split}{vector; used for row; (default: NULL)}
+
+\item{column.split}{vector; used for column; (default: NULL)}
 
 \item{returnHT}{logical; whether return HT; (default: FALSE)}
 

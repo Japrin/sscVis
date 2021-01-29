@@ -159,46 +159,10 @@ ssc.plot.tsne <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,split
           }
 		  p <- p + theme.use() + labs(title=cc) + theme(plot.title = element_text(hjust = 0.5))
 		  legend.ncol <- if(nvalues>10 && !is.infinite(nvalues)) ceiling(nvalues/10) else NULL
-          p <- p + coord_cartesian(xlim = xlim, ylim = ylim, expand = TRUE) +
-            ggplot2::guides(colour = ggplot2::guide_legend(override.aes = list(size=if(nvalues<=26) 4 else 2.0),
-														   ncol=legend.ncol,
-                                                           label.theme = element_text(size=8)))
-
-		  if(vector.friendly){
-####		  	  ####p <- Seurat::AugmentPlot(p,width=width,height=height)
-####			  tmpfilename <- sprintf("%s.tmp.%s.png",if(!is.null(out.prefix)) out.prefix else "",cc)
-####			  #print(tmpfilename)
-####			  ggsave(filename=tmpfilename,
-####					 plot = p + theme_void() + theme(legend.position = "none",
-####									  axis.line.x = element_blank(), axis.line.y = element_blank(),
-####									  axis.title.x = element_blank(), axis.title.y = element_blank(),
-####									  axis.ticks.x = element_blank(),axis.ticks.y = element_blank(),
-####									  plot.title = element_blank()),
-####					 width=7,height=6)
-####			  pbuild.params <- ggplot_build(plot = p)$layout$panel_params[[1]]
-####			  range.values <- c( pbuild.params$x.range, pbuild.params$y.range)
-####			  img <- png::readPNG(source = tmpfilename)
-####			  blank <- ggplot(data = p$data,mapping = aes(Dim1,Dim2)) +
-####						  geom_blank()
-####			  ####if(!is.null(splitBy)){
-####			  ####	  blank <- blank + ggplot2::facet_wrap(~splitBy)
-####			  ####}
-####			  blank <- blank + theme.use() + labs(title=cc) + theme(plot.title = element_text(hjust = 0.5))
-####				  coord_cartesian(xlim = range.values[1:2], ylim = range.values[3:4], expand = F)
-####									  
-####			  blank <- blank + annotation_raster(raster = img,
-####												 xmin = range.values[1], xmax = range.values[2],
-####												 ymin = range.values[3], ymax = range.values[4])
-####			  #p <- blank + geom_hline(yintercept=seq(-8,8,2),linetype=2,alpha=0.2) + geom_vline(xintercept=seq(-8,8,2),linetype=2,alpha=0.2)
-####			  legend.blank <- cowplot::get_legend(p)
-####			  if(legend.w==0){
-####				  p <- blank + theme(legend.position="none")
-####			  }else{
-####				  p <- cowplot::plot_grid(blank, legend.blank, rel_widths = c(4, if(is.null(legend.ncol)) 1*legend.w else legend.ncol*legend.w))
-####			  }
-####			  #p <- blank
-####			  file.remove(tmpfilename)
-		  }
+          p <- p + coord_cartesian(xlim = xlim, ylim = ylim, expand = TRUE)
+	  if(!is.numeric(dat.plot[,cc])){
+	      p <- p + ggplot2::guides(colour = ggplot2::guide_legend(override.aes = list(size=if(nvalues<=26) 4 else 2.0), label.theme = element_text(size=8)), ncol=legend.ncol)
+	  }
 
           return(p)
         })
@@ -758,7 +722,7 @@ ssc.plot.heatmap <- function(obj, assay.name="exprs",out.prefix=NULL,
                                            returnHT=TRUE,
                                            par.legend=list(at = seq(z.lo,z.hi,z.step)),
                                            mytitle=mytitle, top_annotation = ha.col),
-                                      if(as.character(packageVersion("ComplexHeatmap")) %in% c("1.17.1")) list() else list(column_split=column.split),
+                                      if(as.character(packageVersion("ComplexHeatmap")) %in% c("1.17.1")) list() else list(column.split=column.split),
                                       list(...)))
 
 	if(!is.null(out.prefix)){

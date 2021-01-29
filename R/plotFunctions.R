@@ -282,6 +282,7 @@ plotDensity2D <- function(x,peaks=NULL)
 #' @param palatte character; (default: NULL)
 #' @param row.ann.dat data.frame; data for row annotation; (default: NULL)
 #' @param row.split vector; used for row; (default: NULL)
+#' @param column.split vector; used for column; (default: NULL)
 #' @param returnHT logical; whether return HT; (default: FALSE)
 #' @param par.legend list; lengend parameters, used to overwrite the default setting; (default: list())
 #' @param par.heatmap list; other heatmap parameters, (default: list())
@@ -310,7 +311,7 @@ plotMatrix.simple <- function(dat,out.prefix=NULL,mytitle="Heatmap",
                                do.clust=NULL,z.lo=NULL,z.hi=NULL,z.len=100,palatte=NULL,
                                clust.row=FALSE,clust.column=FALSE,show.dendrogram=FALSE,
                                waterfall.row=FALSE,waterfall.column=FALSE,
-                               row.ann.dat=NULL,row.split=NULL,returnHT=FALSE,
+                               row.ann.dat=NULL,row.split=NULL,column.split=NULL,returnHT=FALSE,
                                par.legend=list(),par.heatmap=list(),col.ht=NULL,
 			       top_annotation=NULL,
 			       par.warterfall=list(score.alpha=1.5,do.norm=T),
@@ -417,12 +418,13 @@ plotMatrix.simple <- function(dat,out.prefix=NULL,mytitle="Heatmap",
                   #row_names_gp = gpar(fontsize = 10*28*.cex.row/max(n,32)),
                   #row_dend_width = unit(4, "cm"),
                   #column_dend_height = unit(4, "cm"),
+		  column_split=column.split,
                   show_row_dend = show.dendrogram,
                   show_column_dend = show.dendrogram,
                   heatmap_legend_param = par.legend.used,
 		  top_annotation = top_annotation,
                   cell_fun = my.cell_fun),
-										par.heatmap.used))
+					    par.heatmap.used))
     if(!is.null(row.ann.dat)){
         for(idx in colnames(row.ann.dat)){
             idx.col <- NULL
