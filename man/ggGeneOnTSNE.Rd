@@ -18,6 +18,8 @@ ggGeneOnTSNE(
   pt.order = "value",
   clamp = NULL,
   palette.name = "YlOrRd",
+  verbose = F,
+  fun.extra = NULL,
   width = 9,
   height = 8,
   scales = "fixed",
@@ -54,6 +56,10 @@ should be sample id}
 \item{clamp}{integer vector; expression values will be clamped to the range defined by this parameter, such as c(0,15). (default: NULL )}
 
 \item{palette.name}{character; which palette to use, such as "RdBu","RdYlBu" (default: NULL)}
+
+\item{verbose}{logical;  (default: FALSE)}
+
+\item{fun.extra}{function;  (default: NULL)}
 
 \item{width}{numeric; width of the plot (default: 9)}
 

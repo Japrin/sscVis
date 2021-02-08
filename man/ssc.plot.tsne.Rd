@@ -29,6 +29,7 @@ ssc.plot.tsne(
   theme.use = theme_bw,
   legend.w = 1,
   verbose = F,
+  fun.extra = NULL,
   par.geneOnTSNE = list(scales = "free", pt.order = "value", pt.alpha = 0.1),
   out.prefix = NULL,
   p.ncol = 3,
@@ -86,6 +87,8 @@ ssc.plot.tsne(
 \item{legend.w}{numeric; adjust legend width (default: 1)}
 
 \item{verbose}{logical;  (default: FALSE)}
+
+\item{fun.extra}{function;  (default: NULL)}
 
 \item{par.geneOnTSNE}{character; other parameters of geneOnTSNE}
 

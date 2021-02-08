@@ -77,13 +77,15 @@ getColorPaletteFromNameContinuous <- function(palette.name="YlOrRd"){
 #' @param par.geom_point list; extra parameters for geom_point/geom_point_rast; (default: list())
 #' @param par.legend list; lengend parameters, used to overwrite the default setting; (default: list())
 #' @param splitBy character; split by (default: NULL)
+#' @param verbose logical;  (default: FALSE)
+#' @param fun.extra function;  (default: NULL)
 #' @details For genes contained in both `Y` and `gene.to.show`, show their expression on the tSNE
 #' map provided as `dat.map`. One point in the map represent a cell; cells with higher expression
 #' also have darker color.
 #' @return a ggplot object
 ggGeneOnTSNE <- function(Y,dat.map,gene.to.show,out.prefix=NULL,p.ncol=3,theme.use=theme_bw,
                          xlim=NULL,ylim=NULL,size=NULL,pt.alpha=0.5,pt.order="value",clamp=NULL,
-                         palette.name="YlOrRd",
+                         palette.name="YlOrRd",verbose=F,fun.extra=NULL,
                          width=9,height=8,scales="fixed",vector.friendly=F,
                          par.geom_point=list(),par.legend=list(),splitBy=NULL){
   #suppressPackageStartupMessages(require("data.table"))
@@ -119,89 +121,57 @@ ggGeneOnTSNE <- function(Y,dat.map,gene.to.show,out.prefix=NULL,p.ncol=3,theme.u
   
   make.plot <- function(gene.to.show,dat.plot.melt,show.legend=T,clamp="none",
                         value.range=NULL,size=NULL,vector.friendly=F,
-                        out.prefix=NULL)
+			fun.extra=NULL,
+                        out.prefix=NULL,verbose=F)
   {
-	  lapply(names(gene.to.show),function(x){
-						.dd <- dat.plot.melt[variable==x,]
-						if(!is.null(clamp) && clamp=="none"){
-						}else{
-							if(is.null(clamp)){
-								clamp <- quantile(.dd$value,c(0.05,0.95))
-							}
-							.dd[value < clamp[1],value:=clamp[1]]
-							.dd[value > clamp[2],value:=clamp[2]]
-						}
-						if(is.null(value.range)){
-							value.range <- pretty(.dd$value)
-						}
-						if(vector.friendly){
-							my.ggPoint <- geom_point_rast
-						}else{
-							my.ggPoint <- geom_point
-						}
-						p <- ggplot2::ggplot(.dd,aes_string("Dim1","Dim2"))+
-							do.call(my.ggPoint,c(list(mapping=aes(colour=value),
-													size=if(is.null(size)) auto.point.size(npts)*1.1 else size,
-													alpha=pt.alpha,stroke=0,shape=16),
-												 par.geom_point))+
-							#my.ggPoint(aes(colour=value),
-							#		   size=if(is.null(size)) auto.point.size(npts)*1.1 else size,
-							#		   alpha=pt.alpha,stroke=0,shape=16) +
-							labs(title=x, x ="", y = "")
-						if(!is.null(splitBy)){
-						  p <- p + ggplot2::facet_wrap(~splitBy,ncol = if(length(p.ncol)>1) p.ncol[2] else NULL)
-						}
-						p <- p + do.call(scale_colour_gradientn,
-						                 c(list(colours=getColorPaletteFromNameContinuous(palette.name),
-																	 limits=c(value.range[1],value.range[length(value.range)])),
-																	 par.legend))
-						p <- p + theme.use()
-					    p <- p + theme(plot.title = element_text(hjust = 0.5))+
-							coord_cartesian(xlim = xlim, ylim = ylim, expand = TRUE)
-						legend.p <- NULL
-						legend.p <- cowplot::get_legend(p)
-						if(!show.legend){
-							p <- p + theme(legend.position = "none")
-						}
-
-###						if(vector.friendly){
-###							####p <- Seurat::AugmentPlot(p,width=width,height=height)
-###							tmpfilename <- sprintf("%s.tmp.%s.png",if(!is.null(out.prefix)) out.prefix else "",x)
-###							ggsave(filename=tmpfilename, plot = p + theme_void() + theme(legend.position = "none",
-###												  axis.line.x = element_blank(), axis.line.y = element_blank(),
-###												  axis.title.x = element_blank(), axis.title.y = element_blank(),
-###												  axis.ticks.x = element_blank(),axis.ticks.y = element_blank(),
-###												  plot.title = element_blank()),
-###								 width=7,height=6)
-###							pbuild.params <- ggplot_build(plot = p)$layout$panel_params[[1]]
-###							range.values <- c( pbuild.params$x.range, pbuild.params$y.range)
-###							img <- png::readPNG(source = tmpfilename)
-###							##print(str(p$data))
-###							##p.test <<- p
-###							blank <- ggplot(data = as.data.table(p$data)[1,,drop=F],aes(Dim1,Dim2)) +
-###									  geom_blank()+
-###									  labs(title=x, x ="", y = "") +
-###									  theme(plot.title = element_text(hjust = 0.5))
-###							blank <- blank + p$theme + coord_cartesian(xlim = range.values[1:2], ylim = range.values[3:4], expand = F)
-###							blank <- blank + annotation_raster(raster = img,
-###															 xmin = range.values[1], xmax = range.values[2],
-###															 ymin = range.values[3], ymax = range.values[4])
-###						    legend.blank <- cowplot::get_legend(p)
-###							if(show.legend){
-###								p <- cowplot::plot_grid(blank, legend.blank, rel_widths = c(3, 1))
-###							}else{
-###								p <- blank
-###							}
-###							legend.p <- legend.blank
-###							file.remove(tmpfilename)
-###						}else{
-###							legend.p <- cowplot::get_legend(p)
-###							if(!show.legend){
-###								p <- p + theme(legend.position = "none")
-###							}
-###						}
-						return(list("plot"=p,"legend"=legend.p))
-					 })
+      lapply(names(gene.to.show),function(x){
+				    .dd <- dat.plot.melt[variable==x,]
+				    if(!is.null(clamp) && clamp=="none"){
+				    }else{
+					    if(is.null(clamp)){
+						    clamp <- quantile(.dd$value,c(0.05,0.95))
+					    }
+					    .dd[value < clamp[1],value:=clamp[1]]
+					    .dd[value > clamp[2],value:=clamp[2]]
+				    }
+				    if(is.null(value.range)){
+					    value.range <- pretty(.dd$value)
+				    }
+				    if(vector.friendly){
+					    my.ggPoint <- geom_point_rast
+				    }else{
+					    my.ggPoint <- geom_point
+				    }
+				    p <- ggplot2::ggplot(.dd,aes_string("Dim1","Dim2"))+
+					    do.call(my.ggPoint,c(list(mapping=aes(colour=value),
+											    size=if(is.null(size)) auto.point.size(npts)*1.1 else size,
+											    alpha=pt.alpha,stroke=0,shape=16),
+										     par.geom_point))+
+					    #my.ggPoint(aes(colour=value),
+					    #		   size=if(is.null(size)) auto.point.size(npts)*1.1 else size,
+					    #		   alpha=pt.alpha,stroke=0,shape=16) +
+					    labs(title=x, x ="", y = "")
+				    if(!is.null(splitBy)){
+				      p <- p + ggplot2::facet_wrap(~splitBy,ncol = if(length(p.ncol)>1) p.ncol[2] else NULL)
+				    }
+				    p <- p + do.call(scale_colour_gradientn,
+						     c(list(colours=getColorPaletteFromNameContinuous(palette.name),
+							    limits=c(value.range[1],value.range[length(value.range)])),
+						       par.legend))
+				    p <- p + theme.use()
+				    p <- p + theme(plot.title = element_text(hjust = 0.5))+
+					    coord_cartesian(xlim = xlim, ylim = ylim, expand = TRUE)
+				    if(!is.null(fun.extra)){
+					p <- fun.extra(p)
+					##p <- do.call(`+`,list(p,fun.extra()))
+				    }
+				    legend.p <- NULL
+				    legend.p <- cowplot::get_legend(p)
+				    if(!show.legend){
+					    p <- p + theme(legend.position = "none")
+				    }
+				    return(list("plot"=p,"legend"=legend.p))
+			})
   }
 
   if(scales=="fixed"){
@@ -214,13 +184,21 @@ ggGeneOnTSNE <- function(Y,dat.map,gene.to.show,out.prefix=NULL,p.ncol=3,theme.u
           dat.plot.melt[value > clamp[2],value:=clamp[2]]
       }
 	  value.range <- pretty(dat.plot.melt$value)
-      multi.p <- make.plot(gene.to.show,dat.plot.melt,show.legend=F,clamp="none",value.range=value.range,size=size,vector.friendly=vector.friendly,out.prefix=out.prefix)
-	  legend.p <- multi.p[[1]][["legend"]]
-	  ####+ theme(legend.box.margin = margin(0, 0, 0, 12)))
+      multi.p <- make.plot(gene.to.show,dat.plot.melt,show.legend=F,clamp="none",
+			   value.range=value.range,size=size,
+			   verbose=verbose,
+			   fun.extra=fun.extra,
+			   vector.friendly=vector.friendly,out.prefix=out.prefix)
+      legend.p <- multi.p[[1]][["legend"]]
+      ####+ theme(legend.box.margin = margin(0, 0, 0, 12)))
       p <- cowplot::plot_grid(plotlist=llply(multi.p,function(x){ x[["plot"]] }),ncol = p.ncol[1],align = "hv")
-	  p <- cowplot::plot_grid(p, legend.p, rel_widths = c(p.ncol, 0.4))
+      p <- cowplot::plot_grid(p, legend.p, rel_widths = c(p.ncol, 0.4))
   }else{
-      multi.p <- make.plot(gene.to.show,dat.plot.melt,show.legend=T,clamp=clamp,value.range=NULL,size=size,vector.friendly=vector.friendly,out.prefix=out.prefix)
+      multi.p <- make.plot(gene.to.show,dat.plot.melt,show.legend=T,clamp=clamp,
+			   value.range=NULL,size=size,
+			   verbose=verbose,
+			   fun.extra=fun.extra,
+			   vector.friendly=vector.friendly,out.prefix=out.prefix)
       p <- cowplot::plot_grid(plotlist=llply(multi.p,function(x){ x[["plot"]] }),ncol = p.ncol[1],align = "hv")
   }
   if(!is.null(out.prefix)){

@@ -50,6 +50,7 @@ ssc.plot.silhouette <- function(obj,cluster.label,reducedDim.name="iCor.tsne",do
 #' @param par.legend list; lengend parameters, used to overwrite the default setting; (default: list())
 #' @param theme.use function; which theme to use (default: theme_bw)
 #' @param legend.w numeric; adjust legend width (default: 1)
+#' @param fun.extra function;  (default: NULL)
 #' @param verbose logical;  (default: FALSE)
 #' @importFrom SingleCellExperiment colData reducedDim
 #' @importFrom ggplot2 ggplot aes geom_point scale_colour_manual theme_bw aes_string guides guide_legend coord_cartesian
@@ -74,8 +75,8 @@ ssc.plot.tsne <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,split
                              reduced.name="iCor.tsne",reduced.dim=c(1,2),xlim=NULL,ylim=NULL,size=NULL,
                              palette.name="YlOrRd",adjB=NULL,clamp="none",do.scale=FALSE,
                              label=NULL,par.repel=list(force=1),
-							 vector.friendly=F,par.geom_point=list(),par.legend=list(),
-                             theme.use=theme_bw,legend.w=1,verbose=F,
+			     vector.friendly=F,par.geom_point=list(),par.legend=list(),
+                             theme.use=theme_bw,legend.w=1,verbose=F,fun.extra=NULL,
                              par.geneOnTSNE=list(scales="free",pt.order="value",pt.alpha=0.1),
                              out.prefix=NULL,p.ncol=3,width=NA,height=NA,base_aspect_ratio=1.1,peaks=NULL)
 {
@@ -110,11 +111,11 @@ ssc.plot.tsne <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,split
             dat.plot <- as.data.frame(cbind(dat.plot,dat.map,colData(obj)[,cc,drop=F]))
             colnames(dat.plot) <- c("sample","Dim1","Dim2",cc)
           }
-		  if(par.geneOnTSNE$pt.order=="value"){
-			  dat.plot <- dat.plot[order(dat.plot[,cc]),]
-		  }else if(par.geneOnTSNE$pt.order=="random"){
-			  dat.plot <- dat.plot[sample(nrow(dat.plot),nrow(dat.plot)),]
-		  }
+	  if(par.geneOnTSNE$pt.order=="value"){
+	      dat.plot <- dat.plot[order(dat.plot[,cc]),]
+	  }else if(par.geneOnTSNE$pt.order=="random"){
+	      dat.plot <- dat.plot[sample(nrow(dat.plot),nrow(dat.plot)),]
+	  }
           npts <- nrow(dat.plot)
           if(is.numeric(dat.plot[,cc])){
             nvalues <- Inf
@@ -125,11 +126,11 @@ ssc.plot.tsne <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,split
           }else{
             nvalues <- length(unique(dat.plot[,cc]))
           }
-		  if(vector.friendly){
-			  my.ggPoint <- geom_point_rast
-		  }else{
-			  my.ggPoint <- geom_point
-		  }
+	  if(vector.friendly){
+	      my.ggPoint <- geom_point_rast
+	  }else{
+	      my.ggPoint <- geom_point
+	  }
           p <- ggplot2::ggplot(dat.plot,aes(Dim1,Dim2)) +
 			  do.call(my.ggPoint,c(list(mapping=aes_string(colour=cc),
 									  show.legend=if(!is.numeric(dat.plot[,cc]) && nvalues>40) F else NA,
@@ -153,15 +154,20 @@ ssc.plot.tsne <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,split
           if(is.numeric(dat.plot[,cc])){
             p <- p + do.call(scale_colour_gradientn,
                              c(list(colours = getColorPaletteFromNameContinuous(palette.name)),
-													  par.legend))
+			       par.legend))
           }else{
             p <- p + do.call(scale_colour_manual,c(list(values = colSet[[cc]]),par.legend))
           }
-		  p <- p + theme.use() + labs(title=cc) + theme(plot.title = element_text(hjust = 0.5))
-		  legend.ncol <- if(nvalues>10 && !is.infinite(nvalues)) ceiling(nvalues/10) else NULL
+	  p <- p + theme.use() + labs(title=cc) + theme(plot.title = element_text(hjust = 0.5))
+	  legend.ncol <- if(nvalues>10 && !is.infinite(nvalues)) ceiling(nvalues/10) else NULL
           p <- p + coord_cartesian(xlim = xlim, ylim = ylim, expand = TRUE)
 	  if(!is.numeric(dat.plot[,cc])){
-	      p <- p + ggplot2::guides(colour = ggplot2::guide_legend(override.aes = list(size=if(nvalues<=26) 4 else 2.0), label.theme = element_text(size=8)), ncol=legend.ncol)
+	      p <- p + ggplot2::guides(colour = ggplot2::guide_legend(override.aes = list(size=if(nvalues<=26) 4 else 2.0),
+								      label.theme = element_text(size=8)), ncol=legend.ncol)
+	  }
+	  if(!is.null(fun.extra)){
+	      p <- fun.extra(p)
+	      #p <- do.call(`+`,list(p,fun.extra()))
 	  }
 
           return(p)
@@ -174,11 +180,11 @@ ssc.plot.tsne <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,split
                              base_aspect_ratio=base_aspect_ratio,
 							 base_height=if(!is.na(height)) height else 3.71)
         }else{
-			if(verbose){
-				return(list("plot"=pp,"list"=multi.p))
-			}else{
-				return(pp)
-			}
+	    if(verbose){
+		    return(list("plot"=pp,"list"=multi.p))
+	    }else{
+		    return(pp)
+	    }
         }
       }else{
         warning(sprintf("invalidate parameter: colSet. Please check that!"))
@@ -211,6 +217,8 @@ ssc.plot.tsne <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,split
                                      clamp=clamp,vector.friendly=vector.friendly,theme.use=theme.use,
                                      par.geom_point=par.geom_point,par.legend=par.legend,
                                      splitBy=if(is.null(splitBy)) NULL else obj[[splitBy]],
+				     fun.extra=fun.extra,
+				     verbose=verbose,
                                      out.prefix=out.prefix),
                                 par.geneOnTSNE))
     if(is.null(out.prefix)){
