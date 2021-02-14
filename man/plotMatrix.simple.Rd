@@ -28,6 +28,7 @@ plotMatrix.simple(
   par.legend = list(),
   par.heatmap = list(),
   col.ht = NULL,
+  col.ann = NULL,
   top_annotation = NULL,
   par.warterfall = list(score.alpha = 1.5, do.norm = T),
   pdf.width = 8,
@@ -70,7 +71,7 @@ plotMatrix.simple(
 
 \item{waterfall.column}{logical, order rows to make plot like waterfall (default: FALSE)}
 
-\item{row.ann.dat}{data.frame; data for row annotation; (default: NULL)}
+\item{row.ann.dat}{data.frame; data for row annotation; rownames(row.ann.dat) cannot be NULL; (default: NULL)}
 
 \item{row.split}{vector; used for row; (default: NULL)}
 
@@ -83,6 +84,8 @@ plotMatrix.simple(
 \item{par.heatmap}{list; other heatmap parameters, (default: list())}
 
 \item{col.ht}{vector; (default: NULL)}
+
+\item{col.ann}{list; (default: NULL)}
 
 \item{top_annotation}{passed to Heatmap; (default: NULL)}
 

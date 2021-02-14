@@ -256,9 +256,10 @@ plotDensity2D <- function(x,peaks=NULL)
 #' @param z.hi double; (default: NULL)
 #' @param z.len integer; (default: 100)
 #' @param col.ht vector; (default: NULL)
+#' @param col.ann list; (default: NULL)
 #' @param top_annotation passed to Heatmap; (default: NULL)
 #' @param palatte character; (default: NULL)
-#' @param row.ann.dat data.frame; data for row annotation; (default: NULL)
+#' @param row.ann.dat data.frame; data for row annotation; rownames(row.ann.dat) cannot be NULL; (default: NULL)
 #' @param row.split vector; used for row; (default: NULL)
 #' @param column.split vector; used for column; (default: NULL)
 #' @param returnHT logical; whether return HT; (default: FALSE)
@@ -290,7 +291,7 @@ plotMatrix.simple <- function(dat,out.prefix=NULL,mytitle="Heatmap",
                                clust.row=FALSE,clust.column=FALSE,show.dendrogram=FALSE,
                                waterfall.row=FALSE,waterfall.column=FALSE,
                                row.ann.dat=NULL,row.split=NULL,column.split=NULL,returnHT=FALSE,
-                               par.legend=list(),par.heatmap=list(),col.ht=NULL,
+                               par.legend=list(),par.heatmap=list(),col.ht=NULL,col.ann=NULL,
 			       top_annotation=NULL,
 			       par.warterfall=list(score.alpha=1.5,do.norm=T),
                                pdf.width=8,pdf.height=8,fig.type="pdf",exp.name="Count",...)
@@ -300,6 +301,12 @@ plotMatrix.simple <- function(dat,out.prefix=NULL,mytitle="Heatmap",
     #requireNamespace("circlize")
     #requireNamespace("gridBase")
     #requireNamespace("RColorBrewer")
+
+    if(!is.null(row.ann.dat)){
+	if( !all(rownames(row.ann.dat)==rownames(dat)) ){
+	    warning(sprintf("Not all rownames of row.ann.dat equal to that of dat! "))
+	}
+    }
 
     #### ordering the matrix
     if(!is.null(do.clust)){
@@ -317,7 +324,10 @@ plotMatrix.simple <- function(dat,out.prefix=NULL,mytitle="Heatmap",
 	clust.row <- dat.list[["clust.row"]]
 	scoresR <- dat.list[["scoresR"]]
 	scoresC <- dat.list[["scoresC"]]
-    if(!is.null(row.ann.dat)){ row.ann.dat <- row.ann.dat[order(scoresR,decreasing = T),] }
+    if(!is.null(row.ann.dat)){
+	#row.ann.dat <- row.ann.dat[order(scoresR,decreasing = T),]
+	row.ann.dat <- row.ann.dat[rownames(dat),,drop=F]
+    }
 
 	if(!is.null(out.prefix)){
 		if(fig.type=="pdf"){
@@ -406,13 +416,17 @@ plotMatrix.simple <- function(dat,out.prefix=NULL,mytitle="Heatmap",
     if(!is.null(row.ann.dat)){
         for(idx in colnames(row.ann.dat)){
             idx.col <- NULL
-            if(is.logical(row.ann.dat[[idx]])){
-                row.ann.dat[[idx]] <- as.character(row.ann.dat[[idx]])
-                idx.col <- c("TRUE" = "red", "FALSE" = "blue")
-            }else if(is.character(row.ann.dat[[idx]])){
-                idx.levels <- sort(unique(row.ann.dat[[idx]]))
-                idx.col <- structure(auto.colSet(length(idx.levels)),names=idx.levels)
-            }
+	    if(!is.null(col.ann) && !is.null(col.ann[[idx]])){
+		idx.col <- col.ann[[idx]]
+	    }else{
+		if(is.logical(row.ann.dat[[idx]])){
+		    row.ann.dat[[idx]] <- as.character(row.ann.dat[[idx]])
+		    idx.col <- c("TRUE" = "red", "FALSE" = "blue")
+		}else if(is.character(row.ann.dat[[idx]])){
+		    idx.levels <- sort(unique(row.ann.dat[[idx]]))
+		    idx.col <- structure(auto.colSet(length(idx.levels)),names=idx.levels)
+		}
+	    }
             vv <- row.ann.dat[[idx]]
             names(vv) <- rownames(dat)
             ht <- ht + ComplexHeatmap::Heatmap(vv,name=idx,col=idx.col,
