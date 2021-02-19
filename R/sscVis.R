@@ -165,6 +165,8 @@ ssc.plot.tsne <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,split
 	      p <- p + ggplot2::guides(colour = ggplot2::guide_legend(override.aes = list(size=if(nvalues<=26) 4 else 2.0),
 								      label.theme = element_text(size=8)), ncol=legend.ncol)
 	  }
+	  if(legend.w==0){ p <- p + theme(legend.position="none") }
+
 	  if(!is.null(fun.extra)){
 	      p <- fun.extra(p)
 	      #p <- do.call(`+`,list(p,fun.extra()))
