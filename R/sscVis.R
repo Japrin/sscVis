@@ -145,7 +145,7 @@ ssc.plot.tsne <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,split
                                                            Dim2=median(.SD$Dim2)),
                                                         by=cc]
               p <- p + do.call(ggrepel::geom_text_repel,c(list(aes_string("Dim1","Dim2",label = cc),
-                                                               size=label,data=dat.plot.label),
+                                                               size=if(length(label) > 1) label[cc] else label,data=dat.plot.label),
                                                           par.repel))
           }
           if(!is.null(splitBy)){
