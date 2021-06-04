@@ -262,13 +262,13 @@ run.cutree <- function(dat,method.hclust="ward.D2",method.distance="spearman",k=
 ssc.build <- function(x,display.name=NULL,assay.name="exprs")
 {
   obj <- NULL
-  if(class(x)=="SingleCellExperiment")
+  if(class(x)[1]=="SingleCellExperiment")
   {
     obj <- x
     metadata(obj)$ssc <- list()
-  }else if(class(x) %in% c("matrix","data.frame")){
+  }else if(class(x)[1] %in% c("matrix","data.frame")){
     obj <- SingleCellExperiment(assays = setNames(list(as.matrix(x)),assay.name))
-  }else if(class(x) %in% c("dgCMatrix","dgTMatrix")){
+  }else if(class(x)[1] %in% c("dgCMatrix","dgTMatrix")){
     obj <- SingleCellExperiment(assays = setNames(list(x),assay.name))
   }
   metadata(obj)$ssc$colSet <- list()
