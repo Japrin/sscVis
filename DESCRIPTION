@@ -8,7 +8,7 @@ Description: Visualization of single cell RNAseq data.
 License: GPL-3 + file LICENSE
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1
 Depends: R (>= 3.4), SingleCellExperiment, SummarizedExperiment
 Imports: RColorBrewer, data.table, cowplot, ggplot2, ggrepel, 
     ggpubr, ComplexHeatmap, circlize, dendextend, moduleColor,reshape2,

@@ -80,12 +80,19 @@ directEScombi <- function(ES,varES,useREM=TRUE)
 	result <- ldply(seq_len(nrow(varES)),function(i){
 						ES.i <- ES[i,]
 						varES.i <- varES[i,]
-						if(all(varES.i==0) && all(ES.i==0)){
+                        hasNA.ES.i <- which(is.na(ES.i))
+                        hasNA.varES.i <- which(is.na(varES.i))
+                        if(length(hasNA.ES.i) > 0 || length(hasNA.varES.i) > 0){
+                            if(!all(hasNA.ES.i==hasNA.varES.i)){
+							    return(cbind(MUvals=0,MUsES=0,zSco=0,rpvalESc=1))
+                            }
+                        }
+						if(all(varES.i==0,na.rm=T) && all(ES.i==0,na.rm=T)){
 							return(cbind(MUvals=0,MUsES=0,zSco=0,rpvalESc=1))
 						}
 						f.use <- varES.i!=0
-						if(useREM && sum(f.use)>1){
-							varES.i <- varES.i + tau2.NA.oneRow(Qvals[i],sum(f.use),1/varES.i[f.use])
+						if(useREM && sum(f.use,na.rm=T)>1){
+							varES.i <- varES.i + tau2.NA.oneRow(Qvals[i],sum(f.use,na.rm=T),1/varES.i[f.use])
 						}
 						wt.i <- 1/varES.i[f.use]
 						MUvals <- sum(ES.i[f.use] * wt.i,na.rm=TRUE)/sum(wt.i,na.rm=TRUE)
@@ -164,7 +171,7 @@ collapseEffectSizeLong <- function(dat.long,mode.collapse="comb",group.2nd="grou
     ##
     colidx.freq <- c()
     if(all(c("freq._case","cluster.size") %in% colnames(dat.long))){
-	colidx.freq <- c("freq._case","cluster.size")
+        colidx.freq <- c("freq._case","cluster.size")
     }
     dat.collapse.nOne <- dat.long[dat.long[[group.2nd]] %in% n.group.2nd[N==1,][[group.2nd]],
                                   c("geneID",group.2nd,"dprime","vardprime","P.Value","adj.P.Val","sig",colidx.freq),with=F]
