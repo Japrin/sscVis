@@ -640,6 +640,62 @@ plotDistFromCellInfoTable <- function(obj,out.prefix,plot.type="barplot",
 	}
 }
 
+#' plot a dotplot
+#' @param gene.tb data.table;
+#' @param group.tb data.table; columns including "geneID" and "Group" are required (default NULL)
+#' @param out.prefix character; output prefix. (default NULL)
+#' @param mcls2Name vector; cluster name conversion. (default NULL)
+#' @param column.x character; which column used for x. (default "meta.cluster")
+#' @param column.y character; which column used for y. (default "comb.ES")
+#' @param clamp double vector; expression values will be clamped to the range defined by this parameter, such as c(-0.25,0.5). (default: c(-0.25,0.5) )
+#' @param col.breaks vector; color breaks. (default: c(-0.25,0,0.25,0.5) )
+#' @param par.size list; parameters for scale_size.
+#' @importFrom ggplot2 ggplot aes geom_point facet_grid scale_colour_distiller scale_size labs theme element_blank element_rect element_text
+#' @importFrom ggpubr theme_pubr
+#' @details plot a dotplot
+#' @export
+plotDotPlotFromGeneTable <- function(gene.tb,group.tb=NULL,out.prefix=NULL,mcls2Name=NULL,
+                                     column.x="meta.cluster",column.y="comb.ES",
+                                     clamp=c(-0.25,0.5),col.breaks=c(-0.25,0,0.25,0.5),
+                                     par.size=list(breaks=c(-0.25,0,0.25,0.5),
+                                                   range=c(0.2,6),
+                                                   labels=c(-0.25,0,0.25,0.5),
+                                                   limits=c(-0.25,0.5)*1))
+{
+    group.tb <- group.tb[!duplicated(geneID),]
+    gene.plot.tb <- gene.tb[geneID %in% group.tb$geneID,]
+    if(is.null(mcls2Name)){
+        mcls.vec <- unique(sort(gene.plot.tb[[column.x]]))
+        mcls2Name <- structure(mcls.vec,names=mcls.vec)
+    }
+    gene.plot.tb[,y:=factor(geneID,levels=rev(group.tb$geneID))]
+    gene.plot.tb$x <- mcls2Name[gene.plot.tb[[column.x]]]
+    gene.plot.tb$ES <- gene.plot.tb[[column.y]]
+    gene.plot.tb[["ES"]][ gene.plot.tb[[column.y]] < clamp[1] ] <- clamp[1]
+    gene.plot.tb[["ES"]][ gene.plot.tb[[column.y]] > clamp[2] ] <- clamp[2]
+    gene.plot.tb$Group <- group.tb$Group[match(gene.plot.tb$geneID,group.tb$geneID)]
+
+    p <- ggplot(gene.plot.tb,aes(x,y)) +
+            geom_point(aes(size=ES,color=ES),shape=16) +
+            facet_grid(Group ~ ., scales = "free", space = "free") +
+            scale_colour_distiller(palette = "RdYlBu",breaks=col.breaks,limits=clamp) +
+            do.call(scale_size,par.size) +
+            ##scale_size(breaks=c(-0.25,0,0.25,0.5),range=c(0.2,6),labels=c(-0.25,0,0.25,0.5), limits=c(-0.25,0.5)*1) +
+            labs(x="",y="") +
+            theme_pubr() +
+            theme(strip.text.y = element_blank(),
+                  axis.line.x=element_blank(),
+                  axis.line.y=element_blank(),
+                  panel.background = element_rect(colour = "black", fill = "white"),
+                  #panel.grid = element_line(colour = "grey", linetype = "dashed"),
+                  #panel.grid.major = element_line( colour = "grey", linetype = "dashed", size = 0.2),
+                  axis.text.y = element_text(size=10),
+                  axis.text.x = element_text(angle = 60,size=10, hjust = 1))
+    return(p)
+
+}
+
+
 #' make the matrix looks like "waterfall" (typically genes expression)
 #' @param dat matrix; matrix
 #' @param clust.row logical, character or dendrogram; passed to cluster_rows of Heatmap (default: FALSE)

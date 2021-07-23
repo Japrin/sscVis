@@ -1,6 +1,7 @@
 .onLoad <- function(libname , pkgname) {
 	if(getRversion() >= "2.15.1"){
 		utils::globalVariables(c(".",".N",".SD","variable","value","Group","x",
+                                 "ES", "cluster.size", "y",
 								 "PC","isKneePts",
 								 "meanExp",
 								 "geneID","aid",
