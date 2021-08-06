@@ -4,7 +4,13 @@
 \alias{simple.removeBatchEffect}
 \title{Modified from limma::removeBatchEffect, a little different design matrix}
 \usage{
-simple.removeBatchEffect(x, batch = NULL, covariates = NULL, ...)
+simple.removeBatchEffect(
+  x,
+  batch = NULL,
+  covariates = NULL,
+  block.size = NULL,
+  ...
+)
 }
 \arguments{
 \item{x}{matrix; samples in columns and variables in rows}
@@ -12,6 +18,8 @@ simple.removeBatchEffect(x, batch = NULL, covariates = NULL, ...)
 \item{batch}{character; batch vector (default: NULL)}
 
 \item{covariates}{double; other covariates to adjust (default: NULL)}
+
+\item{block.size}{integer; block size. To process large matrix, each time a block of [INT] genes is processed (default: NULL)}
 
 \item{...}{parameters passed to lmFit}
 }

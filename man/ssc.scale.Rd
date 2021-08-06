@@ -11,6 +11,7 @@ ssc.scale(
   assay.name = "norm_exprs",
   adjB = NULL,
   do.scale = F,
+  block.size = NULL,
   val.padding = 0,
   add.padding = F
 )
@@ -27,6 +28,8 @@ ssc.scale(
 \item{adjB}{character; batch column of the colData(obj). (default: NULL)}
 
 \item{do.scale}{logical; whether scale the data. (default: F)}
+
+\item{block.size}{integer; block size. To process large matrix, each time a block of [INT] genes is processed (default: NULL)}
 
 \item{val.padding}{double; padding value. (default: 0)}
 

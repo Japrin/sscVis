@@ -83,19 +83,15 @@ cor.BLAS <- function(x,y=NULL,method="pearson",nthreads=NULL,na.rm=T)
 #' @param x matrix; samples in columns and variables in rows
 #' @param batch character; batch vector (default: NULL)
 #' @param covariates double; other covariates to adjust (default: NULL)
+#' @param block.size integer; block size. To process large matrix, each time a block of [INT] genes is processed (default: NULL)
 #' @param ... parameters passed to lmFit
 #' @details Modified from limma::removeBatchEffect, a little different design matrix
 #' @return a matrix with dimention as input ( samples in rows and variables in columns)
 #' @importFrom limma lmFit
 #' @importFrom stats model.matrix
 #' @export
-simple.removeBatchEffect <- function (x, batch = NULL, covariates = NULL, ...)
+simple.removeBatchEffect <- function (x, batch = NULL, covariates = NULL, block.size=NULL, ...)
 {
-    if (is.null(batch) && is.null(covariates))
-        return(as.matrix(x))
-	if(!is.null(batch) && length(unique(batch))==1){
-		return(t(scale(t(as.matrix(x)),scale=F)))
-	}
     if (!is.null(batch)) {
         batch <- as.factor(batch)
         batch <- model.matrix(~batch)
@@ -103,11 +99,34 @@ simple.removeBatchEffect <- function (x, batch = NULL, covariates = NULL, ...)
     if (!is.null(covariates))
         covariates <- as.matrix(covariates)
     X.batch <- cbind(batch, covariates)
-    fit <- limma::lmFit(x, X.batch, ...)
-    beta <- fit$coefficients
-    beta[is.na(beta)] <- 0
-    ret.V <- as.matrix(x) - beta %*% t(X.batch)
-    return(ret.V)
+
+    x.cor <- matrix( data = NA_real_, nrow = nrow(x), ncol = ncol(x), dimnames = dimnames(x))
+
+    if(is.null(block.size)) { block.size <- nrow(x) }
+    vars <- rownames(x)
+    nvar <- nrow(x)
+    nblock <- ceiling(nvar/block.size)
+    for(i in 1:nblock){
+        idx.r <- (i-1)*block.size + seq_len(block.size)
+        idx.r <- idx.r[idx.r <= nvar]
+        ####
+        if(is.null(batch) && is.null(covariates))
+        {
+            #return(as.matrix(x))
+            ret.V <- as.matrix(x[idx.r,,drop=F])
+        }else if(!is.null(batch) && length(unique(batch))==1){
+		    #return(t(scale(t(as.matrix(x)),scale=F)))
+		    ret.V <- t(scale(t(as.matrix(x[idx.r,,drop=F])),scale=F))
+	    }else{
+            fit <- limma::lmFit(x[idx.r,,drop=F], X.batch, ...)
+            beta <- fit$coefficients
+            beta[is.na(beta)] <- 0
+            ret.V <- as.matrix(x[idx.r,,drop=F]) - beta %*% t(X.batch)
+        }
+        ####
+        x.cor[vars[idx.r], ] <- ret.V
+    }
+    return(x.cor)
 }
 
 #' run dynamicTreeCut::cutreeDynamic on rows of the given matrix
@@ -780,13 +799,14 @@ ssc.moduleScore <- function(obj, features, pool = NULL,
 #' @param assay.name character; which assay (default: "exprs")
 #' @param adjB character; batch column of the colData(obj). (default: NULL)
 #' @param do.scale logical; whether scale the data. (default: F)
+#' @param block.size integer; block size. To process large matrix, each time a block of [INT] genes is processed (default: NULL)
 #' @param add.padding logical; whether assign padding value for genes not in obj. (default: F)
 #' @param val.padding double; padding value. (default: 0)
 #' @details scale the data specified in assay.name, then store the scaled data to ${assay.name}.scale. One of gene.id and gene.symbol must be provided.
 #' @importFrom SummarizedExperiment `assay<-` assay
 #' @export
 ssc.scale <- function(obj,gene.id,gene.symbol,assay.name="norm_exprs",adjB=NULL,do.scale=F,
-		      val.padding=0,add.padding=F)
+                      block.size=NULL, val.padding=0,add.padding=F)
 {
 	if(missing(gene.id) && missing(gene.symbol)){
 		warning("No gene.id or gene.symbol provided!")
@@ -808,10 +828,27 @@ ssc.scale <- function(obj,gene.id,gene.symbol,assay.name="norm_exprs",adjB=NULL,
 	obj <- obj[names(gene.list),]
 	dat.block <- assay(obj,assay.name)
 	if(!is.null(adjB)){
-		dat.block <- simple.removeBatchEffect(dat.block,batch=obj[[adjB]])
+		dat.block <- simple.removeBatchEffect(dat.block,batch=obj[[adjB]],block.size=block.size)
 	}
 	if(do.scale){
-		dat.block <- t(scale(t(dat.block)))
+		###dat.block <- t(scale(t(dat.block)))
+        data.scaled <- matrix( data = NA_real_, nrow = nrow(dat.block), ncol = ncol(dat.block), dimnames = dimnames(dat.block))
+        if(is.null(block.size)) { block.size <- nrow(dat.block) }
+        vars <- rownames(dat.block)
+        nvar <- nrow(dat.block)
+        nblock <- ceiling(nvar/block.size)
+
+        for(i in 1:nblock){
+            idx.r <- (i-1)*block.size + seq_len(block.size)
+            idx.r <- idx.r[idx.r <= nvar]
+            ####
+            {
+                ret.V <- t(scale(t(dat.block[idx.r,,drop=F])))
+            }
+            ####
+            data.scaled[vars[idx.r], ] <- ret.V
+        }
+        dat.block <- data.scaled
 	}
 	##
 	f.na <- is.na(dat.block)
