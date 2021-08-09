@@ -649,6 +649,7 @@ plotDistFromCellInfoTable <- function(obj,out.prefix,plot.type="barplot",
 #' @param column.y character; which column used for y. (default "comb.ES")
 #' @param clamp double vector; expression values will be clamped to the range defined by this parameter, such as c(-0.25,0.5). (default: c(-0.25,0.5) )
 #' @param col.breaks vector; color breaks. (default: c(-0.25,0,0.25,0.5) )
+#' @param col.palette character; palette to be used. (default "RdYlBu)
 #' @param par.size list; parameters for scale_size.
 #' @importFrom ggplot2 ggplot aes geom_point facet_grid scale_colour_distiller scale_size labs theme element_blank element_rect element_text
 #' @importFrom ggpubr theme_pubr
@@ -657,11 +658,15 @@ plotDistFromCellInfoTable <- function(obj,out.prefix,plot.type="barplot",
 plotDotPlotFromGeneTable <- function(gene.tb,group.tb=NULL,out.prefix=NULL,mcls2Name=NULL,
                                      column.x="meta.cluster",column.y="comb.ES",
                                      clamp=c(-0.25,0.5),col.breaks=c(-0.25,0,0.25,0.5),
+                                     col.palette="RdYlBu",
                                      par.size=list(breaks=c(-0.25,0,0.25,0.5),
                                                    range=c(0.2,6),
                                                    labels=c(-0.25,0,0.25,0.5),
                                                    limits=c(-0.25,0.5)*1))
 {
+    if(is.null(group.tb)){
+        group.tb <- data.table(geneID=unique(gene.tb$geneID),Group="G00")
+    }
     group.tb <- group.tb[!duplicated(geneID),]
     gene.plot.tb <- gene.tb[geneID %in% group.tb$geneID,]
     if(is.null(mcls2Name)){
@@ -678,7 +683,7 @@ plotDotPlotFromGeneTable <- function(gene.tb,group.tb=NULL,out.prefix=NULL,mcls2
     p <- ggplot(gene.plot.tb,aes(x,y)) +
             geom_point(aes(size=ES,color=ES),shape=16) +
             facet_grid(Group ~ ., scales = "free", space = "free") +
-            scale_colour_distiller(palette = "RdYlBu",breaks=col.breaks,limits=clamp) +
+            scale_colour_distiller(palette = col.palette,breaks=col.breaks,limits=clamp) +
             do.call(scale_size,par.size) +
             ##scale_size(breaks=c(-0.25,0,0.25,0.5),range=c(0.2,6),labels=c(-0.25,0,0.25,0.5), limits=c(-0.25,0.5)*1) +
             labs(x="",y="") +

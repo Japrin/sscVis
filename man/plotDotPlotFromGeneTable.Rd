@@ -13,6 +13,7 @@ plotDotPlotFromGeneTable(
   column.y = "comb.ES",
   clamp = c(-0.25, 0.5),
   col.breaks = c(-0.25, 0, 0.25, 0.5),
+  col.palette = "RdYlBu",
   par.size = list(breaks = c(-0.25, 0, 0.25, 0.5), range = c(0.2, 6), labels = c(-0.25,
     0, 0.25, 0.5), limits = c(-0.25, 0.5) * 1)
 )
@@ -33,6 +34,8 @@ plotDotPlotFromGeneTable(
 \item{clamp}{double vector; expression values will be clamped to the range defined by this parameter, such as c(-0.25,0.5). (default: c(-0.25,0.5) )}
 
 \item{col.breaks}{vector; color breaks. (default: c(-0.25,0,0.25,0.5) )}
+
+\item{col.palette}{character; palette to be used. (default "RdYlBu)}
 
 \item{par.size}{list; parameters for scale_size.}
 }
