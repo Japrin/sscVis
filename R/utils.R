@@ -92,13 +92,14 @@ cor.BLAS <- function(x,y=NULL,method="pearson",nthreads=NULL,na.rm=T)
 #' @export
 simple.removeBatchEffect <- function (x, batch = NULL, covariates = NULL, block.size=NULL, ...)
 {
-    if (!is.null(batch)) {
-        batch <- as.factor(batch)
-        batch <- model.matrix(~batch)
-    }
     if (!is.null(covariates))
         covariates <- as.matrix(covariates)
-    X.batch <- cbind(batch, covariates)
+    X.batch <- NULL
+    if(!is.null(batch) && length(unique(batch))>1){
+        batch <- as.factor(batch)
+        batch <- model.matrix(~batch)
+        X.batch <- cbind(batch, covariates)
+    }
 
     x.cor <- matrix( data = NA_real_, nrow = nrow(x), ncol = ncol(x), dimnames = dimnames(x))
 
