@@ -778,6 +778,9 @@ ssc.plot.GeneDensity <- function(obj,out.prefix,gene.id,gene.symbol,assay.name="
 		warning("No gene.id or gene.symbol provided!")
 		return(NULL)
 	}
+    if(is.null(names(rowData(obj)[,"display.name"]))){
+        names(rowData(obj)[,"display.name"]) <- rownames(obj)
+    }
 	if(missing(gene.id) && !is.null(gene.symbol)){
 		gene.list <- rowData(obj)[,"display.name"][which(rowData(obj)[,"display.name"] %in% gene.symbol)]
 	}else{
@@ -831,6 +834,7 @@ ssc.plot.GeneDensity <- function(obj,out.prefix,gene.id,gene.symbol,assay.name="
 		axis(2, las = 1)
 
 		### main
+        ### difference between ks_1.11.7 and ks_1.13.1
 		par(mar = c(6,mar.left,0,0))
 	#	plot(NULL, type = "n",  ylab = "", xlim = dat.plot.x.range, ylim = dat.plot.y.range,
 	#		 main = NA, axes = F, xaxs="i",yaxs="i",xlab="")
