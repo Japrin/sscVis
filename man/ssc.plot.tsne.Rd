@@ -26,6 +26,7 @@ ssc.plot.tsne(
   vector.friendly = F,
   par.geom_point = list(),
   par.legend = list(),
+  show.legend = NULL,
   theme.use = theme_bw,
   legend.w = 1,
   verbose = F,
@@ -81,6 +82,8 @@ ssc.plot.tsne(
 \item{par.geom_point}{list; extra parameters for geom_point/geom_point_rast; (default: list())}
 
 \item{par.legend}{list; lengend parameters, used to overwrite the default setting; (default: list())}
+
+\item{show.legend}{logical; if NULL, determined automatically; (default: NULL)}
 
 \item{theme.use}{function; which theme to use (default: theme_bw)}
 

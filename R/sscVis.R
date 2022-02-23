@@ -48,6 +48,7 @@ ssc.plot.silhouette <- function(obj,cluster.label,reducedDim.name="iCor.tsne",do
 #' @param vector.friendly logical; output vector friendly figure (default: FALSE)
 #' @param par.geom_point list; extra parameters for geom_point/geom_point_rast; (default: list())
 #' @param par.legend list; lengend parameters, used to overwrite the default setting; (default: list())
+#' @param show.legend logical; if NULL, determined automatically; (default: NULL)
 #' @param theme.use function; which theme to use (default: theme_bw)
 #' @param legend.w numeric; adjust legend width (default: 1)
 #' @param fun.extra function;  (default: NULL)
@@ -75,7 +76,8 @@ ssc.plot.tsne <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,split
                              reduced.name="iCor.tsne",reduced.dim=c(1,2),xlim=NULL,ylim=NULL,size=NULL,
                              palette.name="YlOrRd",adjB=NULL,clamp="none",do.scale=FALSE,
                              label=NULL,par.repel=list(force=1),
-			     vector.friendly=F,par.geom_point=list(),par.legend=list(),
+                             vector.friendly=F,par.geom_point=list(),
+                             par.legend=list(),show.legend=NULL,
                              theme.use=theme_bw,legend.w=1,verbose=F,fun.extra=NULL,
                              par.geneOnTSNE=list(scales="free",pt.order="value",pt.alpha=0.1),
                              out.prefix=NULL,p.ncol=3,width=NA,height=NA,base_aspect_ratio=1.1,peaks=NULL)
@@ -133,7 +135,7 @@ ssc.plot.tsne <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,split
 	  }
           p <- ggplot2::ggplot(dat.plot,aes(Dim1,Dim2)) +
 			  do.call(my.ggPoint,c(list(mapping=aes_string(colour=cc),
-									  show.legend=if(!is.numeric(dat.plot[,cc]) && nvalues>40) F else NA,
+									  show.legend=if(is.null(show.legend)) { if(!is.numeric(dat.plot[,cc]) && nvalues>40) F else NA } else show.legend,
 									  size=if(is.null(size)) auto.point.size(npts)*1.1 else size),
 								   par.geom_point)) +
             #my.ggPoint(aes_string(colour=cc),
