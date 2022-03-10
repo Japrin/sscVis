@@ -45,7 +45,7 @@ ssc.plot.silhouette <- function(obj,cluster.label,reducedDim.name="iCor.tsne",do
 #' @param label double; label size. if NULL, no label showed. (default: NULL )
 #' @param par.repel list; passed to geom_text_repel
 #' @param par.geneOnTSNE character; other parameters of geneOnTSNE
-#' @param vector.friendly logical; output vector friendly figure (default: FALSE)
+#' @param my.ggPoint function; used to plot scatter plot, such as geom_point, geom_point_rast, geom_scattermore, geom_scattermost (default: geom_point)
 #' @param par.geom_point list; extra parameters for geom_point/geom_point_rast; (default: list())
 #' @param par.legend list; lengend parameters, used to overwrite the default setting; (default: list())
 #' @param show.legend logical; if NULL, determined automatically; (default: NULL)
@@ -57,6 +57,7 @@ ssc.plot.silhouette <- function(obj,cluster.label,reducedDim.name="iCor.tsne",do
 #' @importFrom ggplot2 ggplot aes geom_point scale_colour_manual theme_bw aes_string guides guide_legend coord_cartesian
 #' @importFrom ggrepel geom_text_repel
 #' @importFrom ggrastr geom_point_rast
+#' @importFrom scattermore geom_scattermore geom_scattermost
 #' @importFrom cowplot save_plot plot_grid
 #' @importFrom utils read.table
 #' @importFrom RColorBrewer brewer.pal
@@ -76,7 +77,8 @@ ssc.plot.tsne <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,split
                              reduced.name="iCor.tsne",reduced.dim=c(1,2),xlim=NULL,ylim=NULL,size=NULL,
                              palette.name="YlOrRd",adjB=NULL,clamp="none",do.scale=FALSE,
                              label=NULL,par.repel=list(force=1),
-                             vector.friendly=F,par.geom_point=list(),
+                             #vector.friendly=F,par.geom_point=list(),
+                             my.ggPoint=geom_point,par.geom_point=list(),
                              par.legend=list(),show.legend=NULL,
                              theme.use=theme_bw,legend.w=1,verbose=F,fun.extra=NULL,
                              par.geneOnTSNE=list(scales="free",pt.order="value",pt.alpha=0.1),
@@ -128,11 +130,12 @@ ssc.plot.tsne <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,split
           }else{
             nvalues <- length(unique(dat.plot[,cc]))
           }
-	  if(vector.friendly){
-	      my.ggPoint <- geom_point_rast
-	  }else{
-	      my.ggPoint <- geom_point
-	  }
+	  #if(vector.friendly){
+	  #    my.ggPoint <- geom_point_rast
+	  #    ##my.ggPoint <- scattermore::geom_scattermore
+	  #}else{
+	  #    my.ggPoint <- geom_point
+	  #}
           p <- ggplot2::ggplot(dat.plot,aes(Dim1,Dim2)) +
 			  do.call(my.ggPoint,c(list(mapping=aes_string(colour=cc),
 									  show.legend=if(is.null(show.legend)) { if(!is.numeric(dat.plot[,cc]) && nvalues>40) F else NA } else show.legend,
@@ -218,7 +221,7 @@ ssc.plot.tsne <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,split
     p <- do.call(ggGeneOnTSNE,c(list(Y=dat.onTSNE, dat.map=dat.map, gene.to.show=gene,
                                      p.ncol=p.ncol,xlim=xlim,ylim=ylim,
                                      size=size,width=width,height=height,palette.name=palette.name,
-                                     clamp=clamp,vector.friendly=vector.friendly,theme.use=theme.use,
+                                     clamp=clamp,my.ggPoint=my.ggPoint,theme.use=theme.use,
                                      par.geom_point=par.geom_point,par.legend=par.legend,
                                      splitBy=if(is.null(splitBy)) NULL else obj[[splitBy]],
 				     fun.extra=fun.extra,

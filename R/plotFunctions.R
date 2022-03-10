@@ -54,6 +54,7 @@ getColorPaletteFromNameContinuous <- function(palette.name="YlOrRd"){
 #' @importFrom RColorBrewer brewer.pal
 #' @importFrom ggplot2 ggplot ggsave scale_colour_gradientn geom_point facet_wrap theme_bw coord_cartesian labs
 #' @importFrom ggrastr geom_point_rast
+#' @importFrom scattermore geom_scattermore geom_scattermost
 #' @importFrom data.table melt data.table `:=`
 #' @importFrom utils head
 #' @param Y matrix or data.frame; Gene expression data, rownames shoud be gene id, colnames
@@ -73,7 +74,7 @@ getColorPaletteFromNameContinuous <- function(palette.name="YlOrRd"){
 #' @param pt.order character; (default: "value")
 #' @param clamp integer vector; expression values will be clamped to the range defined by this parameter, such as c(0,15). (default: NULL )
 #' @param scales character; whether use the same scale across genes. one of "fixed" or "free" (default: "fixed")
-#' @param vector.friendly logical; output vector friendly figure (default: FALSE)
+#' @param my.ggPoint function; used to plot scatter plot, such as geom_point, geom_point_rast, geom_scattermore, geom_scattermost (default: geom_point)
 #' @param par.geom_point list; extra parameters for geom_point/geom_point_rast; (default: list())
 #' @param par.legend list; lengend parameters, used to overwrite the default setting; (default: list())
 #' @param splitBy character; split by (default: NULL)
@@ -86,8 +87,9 @@ getColorPaletteFromNameContinuous <- function(palette.name="YlOrRd"){
 ggGeneOnTSNE <- function(Y,dat.map,gene.to.show,out.prefix=NULL,p.ncol=3,theme.use=theme_bw,
                          xlim=NULL,ylim=NULL,size=NULL,pt.alpha=0.5,pt.order="value",clamp=NULL,
                          palette.name="YlOrRd",verbose=F,fun.extra=NULL,
-                         width=9,height=8,scales="fixed",vector.friendly=F,
-                         par.geom_point=list(),par.legend=list(),splitBy=NULL){
+                         width=9,height=8,scales="fixed",
+                         my.ggPoint=geom_point, par.geom_point=list(),
+                         par.legend=list(),splitBy=NULL){
   #suppressPackageStartupMessages(require("data.table"))
   #requireNamespace("ggplot2",quietly = T)
   #requireNamespace("RColorBrewer",quietly = T)
@@ -120,7 +122,7 @@ ggGeneOnTSNE <- function(Y,dat.map,gene.to.show,out.prefix=NULL,p.ncol=3,theme.u
   dat.plot.melt[,variable:=factor(variable,levels=names(gene.to.show),ordered=T)]
   
   make.plot <- function(gene.to.show,dat.plot.melt,show.legend=T,clamp="none",
-                        value.range=NULL,size=NULL,vector.friendly=F,
+                        value.range=NULL,size=NULL,my.ggPoint=geom_point,
 			fun.extra=NULL,
                         out.prefix=NULL,verbose=F)
   {
@@ -137,11 +139,13 @@ ggGeneOnTSNE <- function(Y,dat.map,gene.to.show,out.prefix=NULL,p.ncol=3,theme.u
 				    if(is.null(value.range)){
 					    value.range <- pretty(.dd$value)
 				    }
-				    if(vector.friendly){
-					    my.ggPoint <- geom_point_rast
-				    }else{
-					    my.ggPoint <- geom_point
-				    }
+				    #if(vector.friendly){
+					#    #my.ggPoint <- geom_point_rast
+	                #    my.ggPoint <- scattermore::geom_scattermore
+				    #}else{
+					#    my.ggPoint <- geom_point
+				    #}
+                    #saveRDS(.dd,"data.debug.rds")
 				    p <- ggplot2::ggplot(.dd,aes_string("Dim1","Dim2"))+
 					    do.call(my.ggPoint,c(list(mapping=aes(colour=value),
 											    size=if(is.null(size)) auto.point.size(npts)*1.1 else size,
@@ -188,7 +192,7 @@ ggGeneOnTSNE <- function(Y,dat.map,gene.to.show,out.prefix=NULL,p.ncol=3,theme.u
 			   value.range=value.range,size=size,
 			   verbose=verbose,
 			   fun.extra=fun.extra,
-			   vector.friendly=vector.friendly,out.prefix=out.prefix)
+			   my.ggPoint=my.ggPoint,out.prefix=out.prefix)
       legend.p <- multi.p[[1]][["legend"]]
       ####+ theme(legend.box.margin = margin(0, 0, 0, 12)))
       p <- cowplot::plot_grid(plotlist=llply(multi.p,function(x){ x[["plot"]] }),ncol = p.ncol[1],align = "hv")
@@ -198,7 +202,7 @@ ggGeneOnTSNE <- function(Y,dat.map,gene.to.show,out.prefix=NULL,p.ncol=3,theme.u
 			   value.range=NULL,size=size,
 			   verbose=verbose,
 			   fun.extra=fun.extra,
-			   vector.friendly=vector.friendly,out.prefix=out.prefix)
+			   my.ggPoint=my.ggPoint,out.prefix=out.prefix)
       p <- cowplot::plot_grid(plotlist=llply(multi.p,function(x){ x[["plot"]] }),ncol = p.ncol[1],align = "hv")
   }
   if(!is.null(out.prefix)){

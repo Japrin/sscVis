@@ -23,7 +23,7 @@ ssc.plot.tsne(
   do.scale = FALSE,
   label = NULL,
   par.repel = list(force = 1),
-  vector.friendly = F,
+  my.ggPoint = geom_point,
   par.geom_point = list(),
   par.legend = list(),
   show.legend = NULL,
@@ -77,7 +77,7 @@ ssc.plot.tsne(
 
 \item{par.repel}{list; passed to geom_text_repel}
 
-\item{vector.friendly}{logical; output vector friendly figure (default: FALSE)}
+\item{my.ggPoint}{function; used to plot scatter plot, such as geom_point, geom_point_rast, geom_scattermore, geom_scattermost (default: geom_point)}
 
 \item{par.geom_point}{list; extra parameters for geom_point/geom_point_rast; (default: list())}
 
