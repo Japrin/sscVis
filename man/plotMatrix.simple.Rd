@@ -31,9 +31,10 @@ plotMatrix.simple(
   col.ann = NULL,
   top_annotation = NULL,
   par.warterfall = list(score.alpha = 1.5, do.norm = T),
+  fig.func = pdf,
+  par.fig = list(),
   pdf.width = 8,
   pdf.height = 8,
-  fig.type = "pdf",
   exp.name = "Count",
   ...
 )
@@ -95,11 +96,11 @@ plotMatrix.simple(
 
 \item{pdf.height}{double; height of the output plot (default: 22)}
 
-\item{fig.type}{character; type of output file (default: "pdf")}
-
 \item{exp.name}{character; showd in the legend (default: "Count")}
 
 \item{...}{parameters passed to ComplexHeatmap::draw}
+
+\item{fig.type}{character; type of output file (default: "pdf")}
 }
 \description{
 plot matrix (typically genes expression)

@@ -296,9 +296,12 @@ plotMatrix.simple <- function(dat,out.prefix=NULL,mytitle="Heatmap",
                                waterfall.row=FALSE,waterfall.column=FALSE,
                                row.ann.dat=NULL,row.split=NULL,column.split=NULL,returnHT=FALSE,
                                par.legend=list(),par.heatmap=list(),col.ht=NULL,col.ann=NULL,
-			       top_annotation=NULL,
-			       par.warterfall=list(score.alpha=1.5,do.norm=T),
-                               pdf.width=8,pdf.height=8,fig.type="pdf",exp.name="Count",...)
+                               top_annotation=NULL,
+                               par.warterfall=list(score.alpha=1.5,do.norm=T),
+                               fig.func=pdf,par.fig=list(),
+                               pdf.width=8,pdf.height=8,
+                               #fig.type="pdf",
+                               exp.name="Count",...)
 {
     #requireNamespace("gplots")
     #requireNamespace("ComplexHeatmap")
@@ -334,10 +337,13 @@ plotMatrix.simple <- function(dat,out.prefix=NULL,mytitle="Heatmap",
     }
 
 	if(!is.null(out.prefix)){
+        fig.type <- gsub(".+_","",substitute(fig.func))
 		if(fig.type=="pdf"){
-			pdf(sprintf("%s.pdf",out.prefix),width=pdf.width,height=pdf.height)
+            do.call(fig.func,c(list(file=sprintf("%s.%s",out.prefix,fig.type),width=pdf.width,height=pdf.height),par.fig))
+			#pdf(sprintf("%s.pdf",out.prefix),width=pdf.width,height=pdf.height)
 		}else{
-			png(sprintf("%s.png",out.prefix),width=pdf.width*100,height=pdf.height*100)
+            do.call(fig.func,c(list(file=sprintf("%s.%s",out.prefix,fig.type),width=pdf.width*100,height=pdf.height*100),par.fig))
+			#png(sprintf("%s.png",out.prefix),width=pdf.width*100,height=pdf.height*100)
 		}
         opar <- par(mar=c(4,2,4,4))
         plot.new()
