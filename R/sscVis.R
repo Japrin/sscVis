@@ -765,6 +765,7 @@ ssc.plot.heatmap <- function(obj, assay.name="exprs",out.prefix=NULL,
 #' @param ann.txt.dis double; adjust the position of the annotation text (default: 0.3)
 #' @param ann.txt.cex double; cex for annotation text (default: 1.2)
 #' @param my.title character; title of the figure (default: "")
+#' @param par.title list; parameters for drawing title by mtext (default: list(side=3,cex=1.8,line=-3,adj=0.5))
 #' @importFrom ks kde
 #' @importFrom fields image.plot
 #' @importFrom scales viridis_pal
@@ -776,7 +777,9 @@ ssc.plot.heatmap <- function(obj, assay.name="exprs",out.prefix=NULL,
 ssc.plot.GeneDensity <- function(obj,out.prefix,gene.id,gene.symbol,assay.name="norm_exprs",
 								expT=c(0.3,0.3),pallete.name="heat",
 								#adjB=NULL,do.scale=F,
-								ann.txt.dis=0.3,ann.txt.cex=1.2,my.title="")
+								ann.txt.dis=0.3,ann.txt.cex=1.2,
+                                my.title="",par.title=list(side=3,cex=1.8,line=-3,adj=0.5))
+        
 {
 
 	if(missing(gene.id) && missing(gene.symbol)){
@@ -898,7 +901,7 @@ ssc.plot.GeneDensity <- function(obj,out.prefix,gene.id,gene.symbol,assay.name="
 		### title
 		par(mar=c(0,mar.left,0,4))
 		plot.new()
-		mtext(text=my.title,side=3,cex=1.8,line=-3,adj=0.5)
+        do.call(mtext,c(list(text=my.title),par.title))
 		
 		### legend
 		par(mar = c(6,0.25,0,1))

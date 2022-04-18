@@ -14,7 +14,8 @@ ssc.plot.GeneDensity(
   pallete.name = "heat",
   ann.txt.dis = 0.3,
   ann.txt.cex = 1.2,
-  my.title = ""
+  my.title = "",
+  par.title = list(side = 3, cex = 1.8, line = -3, adj = 0.5)
 )
 }
 \arguments{
@@ -37,6 +38,8 @@ ssc.plot.GeneDensity(
 \item{ann.txt.cex}{double; cex for annotation text (default: 1.2)}
 
 \item{my.title}{character; title of the figure (default: "")}
+
+\item{par.title}{list; parameters for drawing title by mtext (default: list(side=3,cex=1.8,line=-3,adj=0.5))}
 }
 \description{
 plot gene expression density
