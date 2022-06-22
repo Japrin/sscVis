@@ -250,6 +250,7 @@ ssc.plot.tsne <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,split
 #' @param assay.name character; which assay (default: "exprs")
 #' @param gene character; genes to be showed. (default: NULL)
 #' @param columns character; columns in colData(obj) to be showd. (default: NULL)
+#' @param extra.var character; extra column(s) in the colData(obj) to be kept. (default: NULL)
 #' @param group.var character; column in the colData(obj) used for grouping. (default: "majorCluster")
 #' @param group.in character; only thoes groups to be shown. NULL for all groups. (default: NULL)
 #' @param splitBy character; columns in colData(obj). Split the dataset to mupltiple subset then plot them one by one (default: NULL)
@@ -263,6 +264,7 @@ ssc.plot.tsne <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,split
 #' @param par.boxplot list; geom_boxplot parameters. (default: list(outlier.shape = NA,width=0.25,alpha=0.8))
 #' @param par.text list; geom_text parameters. (default: list(vjust=0))
 #' @param palette.name character; which palette to use. (default: "YlOrRd")
+#' @param do.facet logical; facet the plot?. (default: TRUE)
 #' @param angle.axis.x numeric; rotation angle. (default 60)
 #' @param add character; other plots to add. (default NULL)
 #' @param ... parameter passed to cowplot::save_plot
@@ -280,12 +282,14 @@ ssc.plot.tsne <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,split
 #' NULL, colData of obj with names in `columns` will be plot in violin.
 #' @export
 ssc.plot.violin <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,par.legend=list(),
+                            extra.var=NULL,
                             group.var="majorCluster",group.in=NULL,splitBy=NULL,
                             clamp=c(0,12),adjB=NULL,do.scale=F,
                             angle.axis.x=60,add=NULL,
                             par.boxplot=list(outlier.shape = NA,width=0.25,alpha=0.8),
                             par.text=list(vjust = 0),
                             palette.name="YlOrRd",
+                            do.facet=T,
                             out.prefix=NULL,p.ncol=1,base_aspect_ratio=1.1,...)
 {
   #requireNamespace("ggplot2")
@@ -305,21 +309,22 @@ ssc.plot.violin <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,par
 	  dat.plot <- as.matrix(Matrix::t(dat.violin))
 	  colnames(dat.plot) <- ssc.id2displayName(obj,colnames(dat.plot))
 	  dat.plot.df <- data.table::data.table(sample=rownames(dat.plot),stringsAsFactors = F)
-	  dat.plot.df <- cbind(dat.plot.df,as.data.frame(colData(obj)[,group.var,drop=F]))
+      var.keep <- unique(c(group.var,extra.var))
+	  dat.plot.df <- cbind(dat.plot.df,as.data.frame(colData(obj)[,var.keep,drop=F]))
 	  dat.plot.df <- cbind(dat.plot.df,dat.plot)
 	  if(!is.null(splitBy)){
 	    dat.plot.df <- cbind(dat.plot.df,data.table(splitBy=obj[[splitBy]]))
-	    dat.plot.df <- data.table::melt(dat.plot.df,id.vars=c("sample",group.var,"splitBy"),
+	    dat.plot.df <- data.table::melt(dat.plot.df,id.vars=c("sample",var.keep,"splitBy"),
 	                                    variable.name="gene",value.name=assay.name)
-	    dat.plot.df.grpMean <- dat.plot.df[,lapply(.SD,mean,na.rm=T),by=c("gene",group.var,"splitBy"),.SDcols=assay.name]
-	    colnames(dat.plot.df.grpMean) <- c("gene",group.var,"splitBy","meanExp")
-	    dat.plot.df <- dat.plot.df.grpMean[dat.plot.df,,on=c("gene",group.var,"splitBy")]
+	    dat.plot.df.grpMean <- dat.plot.df[,lapply(.SD,mean,na.rm=T),by=c("gene",var.keep,"splitBy"),.SDcols=assay.name]
+	    colnames(dat.plot.df.grpMean) <- c("gene",var.keep,"splitBy","meanExp")
+	    dat.plot.df <- dat.plot.df.grpMean[dat.plot.df,,on=c("gene",var.keep,"splitBy")]
 	  }else{
-	    dat.plot.df <- data.table::melt(dat.plot.df,id.vars=c("sample",group.var),
+	    dat.plot.df <- data.table::melt(dat.plot.df,id.vars=c("sample",var.keep),
 	                                    variable.name="gene",value.name=assay.name)  
-	    dat.plot.df.grpMean <- dat.plot.df[,lapply(.SD,mean,na.rm=T),by=c("gene",group.var),.SDcols=assay.name]
-	    colnames(dat.plot.df.grpMean) <- c("gene",group.var,"meanExp")
-	    dat.plot.df <- dat.plot.df.grpMean[dat.plot.df,,on=c("gene",group.var)]
+	    dat.plot.df.grpMean <- dat.plot.df[,lapply(.SD,mean,na.rm=T),by=c("gene",var.keep),.SDcols=assay.name]
+	    colnames(dat.plot.df.grpMean) <- c("gene",var.keep,"meanExp")
+	    dat.plot.df <- dat.plot.df.grpMean[dat.plot.df,,on=c("gene",var.keep)]
 	  }
 	  dat.plot.df.grpMean$meanExp.label <- sprintf("%0.2f",dat.plot.df.grpMean$meanExp)
       dat.plot.df[,gene:=factor(gene,levels=colnames(dat.plot),ordered=T)]
@@ -365,12 +370,14 @@ ssc.plot.violin <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,par
 	                                   par.text))
 	    }
 	  }
-	  if(!is.null(splitBy)){
-	    p <- p + facet_grid(splitBy~gene,scales="free_y")
-	  }else{
-	    p <- p + facet_wrap(gene~.,strip.position = "left",scales="free_y",dir="v",ncol=p.ncol)
-	      #		facet_grid(gene ~ .,switch = "y",scales = "free_y")
-	  }
+      if(do.facet==T){
+          if(!is.null(splitBy)){
+            p <- p + facet_grid(splitBy~gene,scales="free_y")
+          }else{
+            p <- p + facet_wrap(gene~.,strip.position = "left",scales="free_y",dir="v",ncol=p.ncol)
+              #		facet_grid(gene ~ .,switch = "y",scales = "free_y")
+          }
+      }
 	  p <- p + theme_bw(base_size = 12) + 
 	    theme(axis.text.x = element_text(angle = angle.axis.x, hjust = 1),
 	          #strip.background = element_blank(),

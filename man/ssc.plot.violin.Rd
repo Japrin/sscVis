@@ -10,6 +10,7 @@ ssc.plot.violin(
   gene = NULL,
   columns = NULL,
   par.legend = list(),
+  extra.var = NULL,
   group.var = "majorCluster",
   group.in = NULL,
   splitBy = NULL,
@@ -21,6 +22,7 @@ ssc.plot.violin(
   par.boxplot = list(outlier.shape = NA, width = 0.25, alpha = 0.8),
   par.text = list(vjust = 0),
   palette.name = "YlOrRd",
+  do.facet = T,
   out.prefix = NULL,
   p.ncol = 1,
   base_aspect_ratio = 1.1,
@@ -37,6 +39,8 @@ ssc.plot.violin(
 \item{columns}{character; columns in colData(obj) to be showd. (default: NULL)}
 
 \item{par.legend}{list; lengend parameters, used to overwrite the default setting; (default: list())}
+
+\item{extra.var}{character; extra column(s) in the colData(obj) to be kept. (default: NULL)}
 
 \item{group.var}{character; column in the colData(obj) used for grouping. (default: "majorCluster")}
 
@@ -59,6 +63,8 @@ ssc.plot.violin(
 \item{par.text}{list; geom_text parameters. (default: list(vjust=0))}
 
 \item{palette.name}{character; which palette to use. (default: "YlOrRd")}
+
+\item{do.facet}{logical; facet the plot?. (default: TRUE)}
 
 \item{out.prefix}{character; output prefix. (default: NULL)}
 
