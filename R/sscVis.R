@@ -261,6 +261,7 @@ ssc.plot.tsne <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,split
 #' @param adjB character; batch column of the colData(obj). (default: NULL)
 #' @param do.scale logical; whether scale the expression value. (default: FALSE)
 #' @param par.legend list; lengend parameters, used to overwrite the default setting; (default: list())
+#' @param par.violin list; geom_violin parameters. (default: list(scale = "width",color=NA,show.legend = T))
 #' @param par.boxplot list; geom_boxplot parameters. (default: list(outlier.shape = NA,width=0.25,alpha=0.8))
 #' @param par.text list; geom_text parameters. (default: list(vjust=0))
 #' @param palette.name character; which palette to use. (default: "YlOrRd")
@@ -286,6 +287,7 @@ ssc.plot.violin <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,par
                             group.var="majorCluster",group.in=NULL,splitBy=NULL,
                             clamp=c(0,12),adjB=NULL,do.scale=F,
                             angle.axis.x=60,add=NULL,
+                            par.violin=list(scale = "width",color=NA,show.legend = T),
                             par.boxplot=list(outlier.shape = NA,width=0.25,alpha=0.8),
                             par.text=list(vjust = 0),
                             palette.name="YlOrRd",
@@ -343,7 +345,8 @@ ssc.plot.violin <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,par
 	  p <- ggplot(dat.plot.df, aes_string(group.var[1], assay.name))
 	  if(length(group.var)==1){
   		p <- p +
-  		  geom_violin(scale = "width",aes(fill=meanExp),color=NA,show.legend = T) +
+  		  ###geom_violin(scale = "width",aes(fill=meanExp),color=NA,show.legend = T) +
+          do.call(geom_violin,c(list(mapping=aes(fill=meanExp)),par.violin)) +
   		  do.call(scale_fill_gradientn,
   		                 c(list(colours = getColorPaletteFromNameContinuous(palette.name),
   		                        limits=clamp),
