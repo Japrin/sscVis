@@ -405,9 +405,16 @@ ssc.plot.violin <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,par
               p <- p + scale_colour_manual(values = metadata(obj)$ssc$colSet[[group.var[2]]])
           }
       }
+      if(do.facet==T){
+          ##if(!is.null(splitBy)){
+          ##  p <- p + facet_grid(splitBy~variable,scales="free_y")
+          ##}else{
+          ##  p <- p + facet_grid(variable ~ .,switch = "y",scales = "free_y")
+          ##}
+          p <- p + facet_grid(variable ~ .,switch = "y",scales = "free_y")
+      }
       p <- p + theme_bw(base_size = 12) +
-			facet_grid(variable ~ .,switch = "y",scales = "free_y") +
-			theme(axis.text.x = element_text(angle = 60, hjust = 1),strip.placement = "inside")
+			theme(axis.text.x = element_text(angle = angle.axis.x, hjust = 1),strip.placement = "inside")
   }
   if(!is.null(out.prefix)){
     cowplot::save_plot(sprintf("%s.violin.%s.pdf",out.prefix,if(!is.null(gene)) "gene" else "columns"),p,
