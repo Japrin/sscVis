@@ -356,8 +356,8 @@ ssc.plot.violin <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,par
   		# 								 par.legend))
 	  }else if(length(group.var)==2)
 	  {
-  		p <- p +
-  			geom_boxplot(aes_string(colour = group.var[2])) +
+  		#p <- p + geom_boxplot(aes_string(colour = group.var[2])) +
+  		p <- p + do.call(geom_boxplot,c(list(mapping=aes_string(colour = group.var[2])),par.boxplot)) +
   			scale_colour_brewer(palette = "Set1")
   			#geom_violin(scale = "width",aes_string(fill="meanExp",linetype=group.var[2],color=group.var[2]),
   			#            show.legend = T) +
@@ -394,9 +394,11 @@ ssc.plot.violin <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,par
 	  }
 	  p <- ggplot(dat.plot.df, aes_string(group.var[1], "value"))
       if(length(group.var)==1){
-          p <- p + geom_boxplot()
+          ##p <- p + geom_boxplot()
+	      p <- p + do.call(geom_boxplot,par.boxplot)
       }else if(length(group.var)==2){
-          p <- p + geom_boxplot(aes_string(colour=group.var[2]))
+          ##p <- p + geom_boxplot(aes_string(colour=group.var[2]))
+  		  p <- p + do.call(geom_boxplot,c(list(mapping=aes_string(colour = group.var[2])),par.boxplot))
           if(is.null(metadata(obj)$ssc$colSet)){
               p <- p + scale_colour_brewer(palette = "Set1")
           }else{
