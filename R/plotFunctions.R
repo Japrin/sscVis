@@ -660,6 +660,9 @@ plotDistFromCellInfoTable <- function(obj,out.prefix,plot.type="barplot",
 #' @param column.size character; which column used for dot size. (default NULL, same for column.v)
 #' @param clamp.v double vector; values for "v" will be clamped to the range defined by this parameter, such as c(-0.25,0.5). (default: c(-0.25,0.5) )
 #' @param clamp.size double vector; values for "size" will be clamped to the range defined by this parameter, such as c(-0.25,0.5). (default: NULL )
+#' @param func.scale.color function; scale_colour_xx. (default: scale_colour_distiller )
+#' @param point.shape integer; point shape. (default: 16 )
+#' @param recipe character; predefined recipe, such as "z.freq". (default: NULL )
 #' @param par.color list; parameters for scale_colour_distiller.
 #' @param par.size list; parameters for scale_size.
 #' @importFrom ggplot2 ggplot aes geom_point facet_grid scale_colour_distiller scale_size labs theme element_blank element_rect element_text
@@ -672,6 +675,7 @@ plotDotPlotFromGeneTable <- function(gene.tb,group.tb=NULL,out.prefix=NULL,mcls2
                                      clamp.v=c(-0.25,0.5), clamp.size=c(-0.25,0.5),
                                      func.scale.color=scale_colour_distiller,
                                      point.shape=16,
+                                     recipe=NULL,
                                      par.color=list(palette="RdYlBu",
                                                     breaks=c(-0.25,0,0.25,0.5),
                                                     direction=-1),
@@ -680,17 +684,30 @@ plotDotPlotFromGeneTable <- function(gene.tb,group.tb=NULL,out.prefix=NULL,mcls2
                                                    labels=c(-0.25,0,0.25,0.5),
                                                    limits=c(-0.25,0.5)*1))
 {
+
+    ##### predefined recipe
+    if(!is.null(recipe) && recipe=="z.freq"){
+        es.breaks <- seq(from=-0.25,to=0.5,by=0.25) * 0.5
+        size.breaks <- seq(from=0,to=1,by=0.1)
+        clamp.v=c(-0.25,0.5) * 0.5
+        clamp.size=c(0,1)
+        func.scale.color=scale_fill_gradientn
+        point.shape=21
+        par.color=list(colors=c("white",RColorBrewer::brewer.pal(n=9,"Reds")), breaks=es.breaks)
+        par.size=list(breaks=size.breaks, range=c(0.2,6), labels=size.breaks, limits=c(0,1)*1)
+    }
+
     if(is.null(group.tb)){
         group.tb <- data.table(geneID=unique(gene.tb$geneID),Group="G00")
     }
     group.tb <- group.tb[!duplicated(geneID),]
     gene.plot.tb <- gene.tb[geneID %in% group.tb$geneID,]
     if(is.null(mcls2Name)){
-        mcls.vec <- unique(sort(gene.plot.tb[[column.x]]))
-        mcls2Name <- structure(mcls.vec,names=mcls.vec)
+        mcls.vec <- (unique(sort(gene.plot.tb[[column.x]])))
+        mcls2Name <- structure(mcls.vec,names=as.character(mcls.vec))
     }
     gene.plot.tb[,y:=factor(geneID,levels=rev(group.tb$geneID))]
-    gene.plot.tb$x <- mcls2Name[gene.plot.tb[[column.x]]]
+    gene.plot.tb$x <- mcls2Name[as.character(gene.plot.tb[[column.x]])]
     gene.plot.tb$v <- gene.plot.tb[[column.v]]
     gene.plot.tb[["v"]][ gene.plot.tb[[column.v]] < clamp.v[1] ] <- clamp.v[1]
     gene.plot.tb[["v"]][ gene.plot.tb[[column.v]] > clamp.v[2] ] <- clamp.v[2]

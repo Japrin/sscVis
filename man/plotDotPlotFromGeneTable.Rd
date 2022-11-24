@@ -16,6 +16,7 @@ plotDotPlotFromGeneTable(
   clamp.size = c(-0.25, 0.5),
   func.scale.color = scale_colour_distiller,
   point.shape = 16,
+  recipe = NULL,
   par.color = list(palette = "RdYlBu", breaks = c(-0.25, 0, 0.25, 0.5), direction = -1),
   par.size = list(breaks = c(-0.25, 0, 0.25, 0.5), range = c(0.2, 6), labels = c(-0.25,
     0, 0.25, 0.5), limits = c(-0.25, 0.5) * 1)
@@ -39,6 +40,12 @@ plotDotPlotFromGeneTable(
 \item{clamp.v}{double vector; values for "v" will be clamped to the range defined by this parameter, such as c(-0.25,0.5). (default: c(-0.25,0.5) )}
 
 \item{clamp.size}{double vector; values for "size" will be clamped to the range defined by this parameter, such as c(-0.25,0.5). (default: NULL )}
+
+\item{func.scale.color}{function; scale_colour_xx. (default: scale_colour_distiller )}
+
+\item{point.shape}{integer; point shape. (default: 16 )}
+
+\item{recipe}{character; predefined recipe, such as "z.freq". (default: NULL )}
 
 \item{par.color}{list; parameters for scale_colour_distiller.}
 
