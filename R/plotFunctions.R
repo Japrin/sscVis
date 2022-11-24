@@ -658,20 +658,23 @@ plotDistFromCellInfoTable <- function(obj,out.prefix,plot.type="barplot",
 #' @param column.x character; which column used for x. (default "meta.cluster")
 #' @param column.v character; which column used for color. (default "comb.ES")
 #' @param column.size character; which column used for dot size. (default NULL, same for column.v)
-#' @param clamp double vector; expression values will be clamped to the range defined by this parameter, such as c(-0.25,0.5). (default: c(-0.25,0.5) )
-#' @param col.breaks vector; color breaks. (default: c(-0.25,0,0.25,0.5) )
-#' @param col.palette character; palette to be used. (default "RdYlBu)
-#' @param col.direction character; palette direction. (default 1)
+#' @param clamp.v double vector; values for "v" will be clamped to the range defined by this parameter, such as c(-0.25,0.5). (default: c(-0.25,0.5) )
+#' @param clamp.size double vector; values for "size" will be clamped to the range defined by this parameter, such as c(-0.25,0.5). (default: NULL )
+#' @param par.color list; parameters for scale_colour_distiller.
 #' @param par.size list; parameters for scale_size.
 #' @importFrom ggplot2 ggplot aes geom_point facet_grid scale_colour_distiller scale_size labs theme element_blank element_rect element_text
 #' @importFrom ggpubr theme_pubr
 #' @details plot a dotplot
 #' @export
 plotDotPlotFromGeneTable <- function(gene.tb,group.tb=NULL,out.prefix=NULL,mcls2Name=NULL,
-                                     column.x="meta.cluster",column.v="comb.ES",column.size=NULL,
-                                     clamp=c(-0.25,0.5),col.breaks=c(-0.25,0,0.25,0.5),
-                                     clamp.size=NULL,
-                                     col.palette="RdYlBu",col.direction=1,
+                                     column.x="meta.cluster",
+                                     column.v="comb.ES",column.size=NULL,
+                                     clamp.v=c(-0.25,0.5), clamp.size=c(-0.25,0.5),
+                                     func.scale.color=scale_colour_distiller,
+                                     point.shape=16,
+                                     par.color=list(palette="RdYlBu",
+                                                    breaks=c(-0.25,0,0.25,0.5),
+                                                    direction=-1),
                                      par.size=list(breaks=c(-0.25,0,0.25,0.5),
                                                    range=c(0.2,6),
                                                    labels=c(-0.25,0,0.25,0.5),
@@ -688,20 +691,25 @@ plotDotPlotFromGeneTable <- function(gene.tb,group.tb=NULL,out.prefix=NULL,mcls2
     }
     gene.plot.tb[,y:=factor(geneID,levels=rev(group.tb$geneID))]
     gene.plot.tb$x <- mcls2Name[gene.plot.tb[[column.x]]]
-    gene.plot.tb$ES <- gene.plot.tb[[column.y]]
-    gene.plot.tb[["ES"]][ gene.plot.tb[[column.y]] < clamp[1] ] <- clamp[1]
-    gene.plot.tb[["ES"]][ gene.plot.tb[[column.y]] > clamp[2] ] <- clamp[2]
-    if(is.null(column.size)) { column.size <- column.y }
+    gene.plot.tb$v <- gene.plot.tb[[column.v]]
+    gene.plot.tb[["v"]][ gene.plot.tb[[column.v]] < clamp.v[1] ] <- clamp.v[1]
+    gene.plot.tb[["v"]][ gene.plot.tb[[column.v]] > clamp.v[2] ] <- clamp.v[2]
+    if(is.null(column.size)) { column.size <- column.v }
     gene.plot.tb$size <- gene.plot.tb[[column.size]]
     gene.plot.tb[["size"]][ gene.plot.tb[[column.size]] < clamp.size[1] ] <- clamp.size[1]
     gene.plot.tb[["size"]][ gene.plot.tb[[column.size]] > clamp.size[2] ] <- clamp.size[2]
     gene.plot.tb$Group <- group.tb$Group[match(gene.plot.tb$geneID,group.tb$geneID)]
 
-    p <- ggplot(gene.plot.tb,aes(x,y)) +
-            geom_point(aes(size=size,color=ES),shape=16) +
-            facet_grid(Group ~ ., scales = "free", space = "free") +
-            scale_colour_distiller(palette = col.palette,breaks=col.breaks,direction=col.direction,limits=clamp) +
-            do.call(scale_size,par.size) +
+    p <- ggplot(gene.plot.tb,aes(x,y))
+    if(point.shape==16){
+        p <- p + geom_point(aes(size=size,color=v),shape=point.shape)
+    }else{
+        p <- p + geom_point(aes(size=size,fill=v),color="lightgray",shape=point.shape)
+    }
+    p <- p + facet_grid(Group ~ ., scales = "free", space = "free") +
+            do.call(func.scale.color,c(list(limits=clamp.v,name=column.v),par.color)) +
+            ##scale_colour_distiller(palette = col.palette,breaks=col.breaks,direction=col.direction,limits=clamp.v) +
+            do.call(scale_size,c(list(name=column.size),par.size)) +
             ##scale_size(breaks=c(-0.25,0,0.25,0.5),range=c(0.2,6),labels=c(-0.25,0,0.25,0.5), limits=c(-0.25,0.5)*1) +
             labs(x="",y="") +
             theme_pubr() +

@@ -12,11 +12,11 @@ plotDotPlotFromGeneTable(
   column.x = "meta.cluster",
   column.v = "comb.ES",
   column.size = NULL,
-  clamp = c(-0.25, 0.5),
-  col.breaks = c(-0.25, 0, 0.25, 0.5),
-  clamp.size = NULL,
-  col.palette = "RdYlBu",
-  col.direction = 1,
+  clamp.v = c(-0.25, 0.5),
+  clamp.size = c(-0.25, 0.5),
+  func.scale.color = scale_colour_distiller,
+  point.shape = 16,
+  par.color = list(palette = "RdYlBu", breaks = c(-0.25, 0, 0.25, 0.5), direction = -1),
   par.size = list(breaks = c(-0.25, 0, 0.25, 0.5), range = c(0.2, 6), labels = c(-0.25,
     0, 0.25, 0.5), limits = c(-0.25, 0.5) * 1)
 )
@@ -36,13 +36,11 @@ plotDotPlotFromGeneTable(
 
 \item{column.size}{character; which column used for dot size. (default NULL, same for column.v)}
 
-\item{clamp}{double vector; expression values will be clamped to the range defined by this parameter, such as c(-0.25,0.5). (default: c(-0.25,0.5) )}
+\item{clamp.v}{double vector; values for "v" will be clamped to the range defined by this parameter, such as c(-0.25,0.5). (default: c(-0.25,0.5) )}
 
-\item{col.breaks}{vector; color breaks. (default: c(-0.25,0,0.25,0.5) )}
+\item{clamp.size}{double vector; values for "size" will be clamped to the range defined by this parameter, such as c(-0.25,0.5). (default: NULL )}
 
-\item{col.palette}{character; palette to be used. (default "RdYlBu)}
-
-\item{col.direction}{character; palette direction. (default 1)}
+\item{par.color}{list; parameters for scale_colour_distiller.}
 
 \item{par.size}{list; parameters for scale_size.}
 }
