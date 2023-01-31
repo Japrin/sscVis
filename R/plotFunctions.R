@@ -686,15 +686,26 @@ plotDotPlotFromGeneTable <- function(gene.tb,group.tb=NULL,out.prefix=NULL,mcls2
 {
 
     ##### predefined recipe
-    if(!is.null(recipe) && recipe=="z.freq"){
+    if(!is.null(recipe))
+    {
+       if(recipe=="z.freq"){
         es.breaks <- seq(from=-0.25,to=0.5,by=0.25) * 0.5
-        size.breaks <- seq(from=0,to=1,by=0.1)
         clamp.v=c(-0.25,0.5) * 0.5
+        #es.breaks <- seq(from=-0.25,to=1.0,by=0.25)
+        #clamp.v=c(-0.25,1.0)
+        size.breaks <- seq(from=0,to=1,by=0.1)
         clamp.size=c(0,1)
         func.scale.color=scale_fill_gradientn
         point.shape=21
         par.color=list(colors=c("white",RColorBrewer::brewer.pal(n=9,"Reds")), breaks=es.breaks)
         par.size=list(breaks=size.breaks, range=c(0.2,6), labels=size.breaks, limits=c(0,1)*1)
+       }else if(recipe=="z.freq11"){
+        clamp.v=c(-0.5,1.0)
+        func.scale.color=scale_fill_gradientn
+        point.shape=21
+        par.color=list(colours=c("white", RColorBrewer::brewer.pal(n=9,"Reds")), breaks=seq(from=-0.5,to=1.0,by=0.5))
+        par.size=list(breaks=seq(from=0,to=1,by=0.1), range=c(0.2,6), labels=seq(from=0,to=1,by=0.1), limits=c(0,1)*1)
+       }
     }
 
     if(is.null(group.tb)){
