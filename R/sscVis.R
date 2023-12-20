@@ -264,10 +264,11 @@ ssc.plot.tsne <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,split
 #' @param par.violin list; geom_violin parameters. (default: list(scale = "width",color=NA,show.legend = T))
 #' @param par.boxplot list; geom_boxplot parameters. (default: list(outlier.shape = NA,width=0.25,alpha=0.8))
 #' @param par.text list; geom_text parameters. (default: list(vjust=0))
+#' @param par.pointrange list; . (default: list(groupBy=NULL))
 #' @param palette.name character; which palette to use. (default: "YlOrRd")
 #' @param do.facet logical; facet the plot?. (default: TRUE)
 #' @param angle.axis.x numeric; rotation angle. (default 60)
-#' @param add character; other plots to add. (default NULL)
+#' @param add character; other plots to add. one of "boxplot", "text", "" (default NULL)
 #' @param ... parameter passed to cowplot::save_plot
 #' @importFrom SingleCellExperiment colData reducedDim
 #' @importFrom ggplot2 ggplot aes geom_violin scale_fill_gradientn theme_bw theme aes_string facet_grid element_text geom_boxplot scale_colour_brewer
@@ -290,6 +291,7 @@ ssc.plot.violin <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,par
                             par.violin=list(scale = "width",color=NA,show.legend = T),
                             par.boxplot=list(outlier.shape = NA,width=0.25,alpha=0.8),
                             par.text=list(vjust = 0),
+                            par.pointrange=list(groupBy=NULL),
                             palette.name="YlOrRd",
                             do.facet=T,
                             out.prefix=NULL,p.ncol=1,base_aspect_ratio=1.1,...)
@@ -366,7 +368,20 @@ ssc.plot.violin <- function(obj, assay.name="exprs", gene=NULL, columns=NULL,par
 	  if(!is.null(add)){
 	    if("boxplot" %in% add){
 	      p <- p + do.call(geom_boxplot,par.boxplot)
-	    }
+	    }else if("pointrange" %in% add){
+            .pdata <- p$data
+            .pdata$.exprs <- .pdata[[assay.name]]
+            .pdata.summary.tb <- .pdata[,.(d.mean=mean(.exprs), d.sd=sd(.exprs),
+                                             d.median=median(.exprs),
+                                             lower=quantile(.exprs,0.25),
+                                             upper=quantile(.exprs,0.75)
+                                             ),
+                                          by=c("gene",par.pointrange[["groupBy"]])]
+
+            p <- p + geom_pointrange(aes_string(ymin = "lower", ymax = "upper",x=group.var[1],y="d.median"),
+                                     alpha=0.8,color="darkred", data=.pdata.summary.tb)
+
+        }
 	    if("text" %in% add){
 	      p <- p + do.call(geom_text,c(list(data=dat.plot.df.grpMean,
 	                                        mapping=aes_string(y="meanExp",label="meanExp.label")),

@@ -22,6 +22,7 @@ ssc.plot.violin(
   par.violin = list(scale = "width", color = NA, show.legend = T),
   par.boxplot = list(outlier.shape = NA, width = 0.25, alpha = 0.8),
   par.text = list(vjust = 0),
+  par.pointrange = list(groupBy = NULL),
   palette.name = "YlOrRd",
   do.facet = T,
   out.prefix = NULL,
@@ -57,13 +58,15 @@ ssc.plot.violin(
 
 \item{angle.axis.x}{numeric; rotation angle. (default 60)}
 
-\item{add}{character; other plots to add. (default NULL)}
+\item{add}{character; other plots to add. one of "boxplot", "text", "" (default NULL)}
 
 \item{par.violin}{list; geom_violin parameters. (default: list(scale = "width",color=NA,show.legend = T))}
 
 \item{par.boxplot}{list; geom_boxplot parameters. (default: list(outlier.shape = NA,width=0.25,alpha=0.8))}
 
 \item{par.text}{list; geom_text parameters. (default: list(vjust=0))}
+
+\item{par.pointrange}{list; . (default: list(groupBy=NULL))}
 
 \item{palette.name}{character; which palette to use. (default: "YlOrRd")}
 
