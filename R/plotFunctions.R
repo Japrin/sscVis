@@ -407,6 +407,9 @@ plotMatrix.simple <- function(dat,out.prefix=NULL,mytitle="Heatmap",
         row.split <- row.split[rownames(dat)]
     }
 
+    #####
+    #clust.row <- F
+    #par.heatmap.used$row_split <- NULL
     ht <- do.call(ComplexHeatmap::Heatmap,c(list(matrix=dat, name = mytitle,
                   col = if(is.null(col.ht)) colorRamp2(seq(z.lo,z.hi,length=z.len),
 						       colorRampPalette(palatte)(z.len)) else col.ht,
@@ -444,11 +447,14 @@ plotMatrix.simple <- function(dat,out.prefix=NULL,mytitle="Heatmap",
         }
     }
 
+    #print("hahhaha")
+    #print(clust.row)
     if(!is.null(out.prefix)){
         ComplexHeatmap::draw(ht, newpage= FALSE,merge_legends = TRUE,split=row.split,...)
         dev.off()
         #par(opar)
     }
+    #print("end")
     if(returnHT){ return(ht) }
 }
 
@@ -782,20 +788,24 @@ matrix.waterfall <- function(dat,score.alpha=1.5,clust.row=FALSE,clust.column=FA
 	scoresC <- NULL
 	scoresR <- NULL
     dat.ordered <- dat
-    if(clust.row=="cutreeDynamic"){
+    #print(class(clust.row))
+    #print((clust.row))
+    #print(clust.row=="cutreeDynamic")
+    #print(is.character(clust.row))
+    if(is.character(clust.row) && clust.row=="cutreeDynamic"){
         res.clust.row <- run.cutreeDynamic(dat,...)
         dat.ordered <- dat[res.clust.row$hclust$order,]
         clust.row <- res.clust.row$branch
-    }else if(clust.row=="cutree"){
+    }else if(is.character(clust.row) && clust.row=="cutree"){
         res.clust.row <- run.cutree(dat,...)
         dat.ordered <- dat[res.clust.row$hclust$order,]
         clust.row <- res.clust.row$branch
 	}
-    if(clust.column=="cutreeDynamic"){
+    if(is.character(clust.column) && clust.column=="cutreeDynamic"){
         res.clust.column <- run.cutreeDynamic(t(dat),...)
         dat.ordered <- dat[,res.clust.column$hclust$order]
         clust.column <- res.clust.column$branch
-    }else if(clust.column=="cutree"){
+    }else if(is.character(clust.column) && clust.column=="cutree"){
         res.clust.column <- run.cutree(t(dat),...)
         dat.ordered <- dat[,res.clust.column$hclust$order]
         clust.column <- res.clust.column$branch
