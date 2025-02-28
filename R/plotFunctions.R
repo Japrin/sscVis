@@ -128,7 +128,7 @@ ggGeneOnTSNE <- function(Y,dat.map,gene.to.show,out.prefix=NULL,p.ncol=3,theme.u
   {
       lapply(names(gene.to.show),function(x){
 				    .dd <- dat.plot.melt[variable==x,]
-				    if(!is.null(clamp) && clamp=="none"){
+				    if(!is.null(clamp) && length(clamp)==1 && clamp=="none"){
 				    }else{
 					    if(is.null(clamp)){
 						    clamp <- quantile(.dd$value,c(0.05,0.95))
@@ -170,6 +170,8 @@ ggGeneOnTSNE <- function(Y,dat.map,gene.to.show,out.prefix=NULL,p.ncol=3,theme.u
 					##p <- do.call(`+`,list(p,fun.extra()))
 				    }
 				    legend.p <- NULL
+                    #### todo: ggplot2 v3.5.0 or above?
+                    #### legend.p <- cowplot::get_plot_component(p, 'guide-box-right')
 				    legend.p <- cowplot::get_legend(p)
 				    if(!show.legend){
 					    p <- p + theme(legend.position = "none")
@@ -179,7 +181,7 @@ ggGeneOnTSNE <- function(Y,dat.map,gene.to.show,out.prefix=NULL,p.ncol=3,theme.u
   }
 
   if(scales=="fixed"){
-      if(!is.null(clamp) && clamp=="none"){
+      if(!is.null(clamp) && length(clamp)==1 && clamp=="none"){
       }else{
           if(is.null(clamp)){
               clamp <- quantile(dat.plot.melt$value,c(0.05,0.95))
